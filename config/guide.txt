@@ -1,0 +1,33 @@
+- instalar o Miniconda3: https://docs.anaconda.com/miniconda/
+- inserir ao path do sistemma
+--------------------------------------------------------------------------------
+
+* CRIANDO UMA ENV CONDA COM YML:
+$ conda env create -f env.yml
+$ conda activate venvname
+
+** Listar ambientes conda:
+$ conda env list
+
+** Listar pacotes instalados
+$ conda list
+
+Em caso de utilização do conda, é interessante adicionar o canal conda-forge, 
+porque este canal é um repositório de pacotes que contém uma vasta gama de pacotes
+que não estão disponíveis nos canais padrão do Conda.
+
+$ conda config --add channels conda-forge
+
+
+# Atualizar o ambiente existente com base no arquivo env.yml
+
+
+------------------------------------------------------------------------------------
+* CRIANDO UMA ENV COM O VIRTUALENV:
+
+$ pip install virtualenv
+$ virtualenv envname
+$ envname activate
+
+** instalar as dependencias:
+* pip install -r requirements.txt
