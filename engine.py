@@ -1,13 +1,14 @@
 import sympy as sp
 import random
 import numpy as np
+from deap import base, creator, tools, algorithms
 import matplotlib.pyplot as plt
 
 
-def get_function():
+def get_function(func_str):
     """Aceita uma função matemática do usuário."""
-    func_str = input(
-        "Insira a função em termos de x e y (por exemplo, 'sin(sqrt(x**2 + y**2))**2 - 0.5'): ")
+    # func_str = input(
+    #     "Insira a função em termos de x e y (por exemplo, 'sin(sqrt(x**2 + y**2))**2 - 0.5'): ")
     x, y = sp.symbols('x y')
     func = sp.sympify(func_str)
     return func, x, y
@@ -41,6 +42,10 @@ def crossover_type(one_point, two_point, uniform):
         "uniform": uniform
     }
     return characteristics
+
+
+
+
 
 
 def evaluate_population(population, func, x, y):
