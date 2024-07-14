@@ -36,16 +36,20 @@ class GeneticAlgorithmExecutor:
         toolbox = base.Toolbox()
         interval = exec_chars.interval
         toolbox.register("attr_float", random.uniform,
-                         interval[0], interval[1])
-        toolbox.register("individual", tools.initRepeat,
-                         creator.Individual, toolbox.attr_float, n=2)
+                        interval[0], interval[1])
+        if y is not None:
+            toolbox.register("individual", tools.initRepeat,
+                            creator.Individual, toolbox.attr_float, n=2)
+        else:
+            toolbox.register("individual", tools.initRepeat,
+                            creator.Individual, toolbox.attr_float, n=1)
         toolbox.register("population", tools.initRepeat,
-                         list, toolbox.individual)
+                        list, toolbox.individual)
 
         toolbox.register("evaluate", self.evaluate_func, func=func, x=x, y=y)
         toolbox.register("mate", tools.cxOnePoint if cross_type.one_point else (
             tools.cxTwoPoint if cross_type.two_point else tools.cxUniform))
-        toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.1)
+        toolbox.register("mutate", self.mutate_within_bounds, interval=interval, mu=0, sigma=1, indpb=0.1)
         toolbox.register("select", tools.selTournament, tournsize=3)
 
         population = toolbox.population(n=exec_chars.population_size)
@@ -142,7 +146,7 @@ class GeneticAlgorithmExecutor:
             # Armazena o melhor indivíduo de cada geração
             best_individual = tools.selBest(population, 1)[0]
             best_individuals.append(
-                (gen, best_individual, best_individual.fitness.values[0]))
+                (gen, best_individual[:], best_individual.fitness.values[0]))
 
         return population, logbook, best_individuals
 
@@ -157,17 +161,31 @@ class GeneticAlgorithmExecutor:
             best_experiment_values.append(best_individuals[-1][2])
             if exp == 0:
                 for gen, best_ind, best_fit in best_individuals:
-                    best_individuals_per_generation.append([best_fit])
+                    best_individuals_per_generation.append([best_ind])
             else:
                 for i, (gen, best_ind, best_fit) in enumerate(best_individuals):
-                    best_individuals_per_generation[i].append(best_fit)
+                    best_individuals_per_generation[i].append(best_ind)
 
-        mean_best_individuals_per_generation = np.mean(
-            best_individuals_per_generation, axis=1)
+        mean_best_individuals_per_generation = [
+            [float(np.mean([ind[i] for ind in generation])) for i in range(len(generation[0]))]
+            for generation in best_individuals_per_generation]
 
         return best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation
 
-    def evaluate_func(self, individual, func, x, y):
-        x_val, y_val = individual
-        result = func.subs({x: x_val, y: y_val})
+    def evaluate_func(self, individual, func, x, y=None):
+        if y is not None:
+            x_val, y_val = individual
+            result = func.subs({x: x_val, y: y_val})
+        else:
+            x_val = individual[0]
+            result = func.subs({x: x_val})
         return float(result),  # Retorna como uma tupla contendo um float
+
+    def mutate_within_bounds(self, individual, interval, mu, sigma, indpb):
+        """Mutate an individual ensuring the mutation stays within bounds."""
+        for i in range(len(individual)):
+            if random.random() < indpb:
+                individual[i] += random.gauss(mu, sigma)
+                # Ensure the mutation is within bounds
+                individual[i] = max(min(individual[i], interval[1]), interval[0])
+        return individual,
