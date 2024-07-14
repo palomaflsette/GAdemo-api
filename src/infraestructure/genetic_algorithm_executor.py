@@ -79,33 +79,63 @@ class GeneticAlgorithmExecutor:
                 for ind, norm_fit in zip(population, normalized_fitnesses):
                     ind.fitness.values = (norm_fit,)
 
-            # Seleção dos melhores indivíduos (elitismo)
-            if exec_chars.elitism:
-                elite = tools.selBest(population, 1)
-                offspring = toolbox.select(population, len(population) - 1)
-                offspring.append(elite[0])
+            if exec_chars.steady_state or exec_chars.steady_state_without_duplicateds:
+                gap = int(exec_chars.gap * len(population))
+                offspring = toolbox.select(population, gap)
+                offspring = list(map(toolbox.clone, offspring))
+                for child1, child2 in zip(offspring[::2], offspring[1::2]):
+                    if random.random() < exec_chars.crossover_rate:
+                        toolbox.mate(child1, child2)
+                        del child1.fitness.values
+                        del child2.fitness.values
+
+                for mutant in offspring:
+                    if random.random() < exec_chars.mutation_rate:
+                        toolbox.mutate(mutant)
+                        del mutant.fitness.values
+
+                invalid_ind = [
+                    ind for ind in offspring if not ind.fitness.valid]
+                fitnesses = map(toolbox.evaluate, invalid_ind)
+                for ind, fit in zip(invalid_ind, fitnesses):
+                    ind.fitness.values = fit
+
+                if exec_chars.steady_state_without_duplicateds:
+                    offspring = [
+                        ind for ind in offspring if ind not in population]
+
+                population.extend(offspring)
+                population.sort(key=lambda ind: ind.fitness.values,
+                                reverse=exec_chars.maximize)
+                population = population[:exec_chars.population_size]
             else:
                 offspring = toolbox.select(population, len(population))
+                offspring = list(map(toolbox.clone, offspring))
 
-            offspring = list(map(toolbox.clone, offspring))
+                for child1, child2 in zip(offspring[::2], offspring[1::2]):
+                    if random.random() < exec_chars.crossover_rate:
+                        toolbox.mate(child1, child2)
+                        del child1.fitness.values
+                        del child2.fitness.values
 
-            for child1, child2 in zip(offspring[::2], offspring[1::2]):
-                if random.random() < exec_chars.crossover_rate:
-                    toolbox.mate(child1, child2)
-                    del child1.fitness.values
-                    del child2.fitness.values
+                for mutant in offspring:
+                    if random.random() < exec_chars.mutation_rate:
+                        toolbox.mutate(mutant)
+                        del mutant.fitness.values
 
-            for mutant in offspring:
-                if random.random() < exec_chars.mutation_rate:
-                    toolbox.mutate(mutant)
-                    del mutant.fitness.values
+                invalid_ind = [
+                    ind for ind in offspring if not ind.fitness.valid]
+                fitnesses = map(toolbox.evaluate, invalid_ind)
+                for ind, fit in zip(invalid_ind, fitnesses):
+                    ind.fitness.values = fit
 
-            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-            fitnesses = map(toolbox.evaluate, invalid_ind)
-            for ind, fit in zip(invalid_ind, fitnesses):
-                ind.fitness.values = fit
+                population[:] = offspring
 
-            population[:] = offspring
+            if exec_chars.elitism:
+                best_individual = tools.selBest(population, 1)[0]
+                if best_individual not in population:
+                    population[-1] = best_individual
+
             record = stats.compile(population)
             logbook.record(gen=gen, nevals=len(invalid_ind), **record)
 

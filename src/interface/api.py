@@ -31,6 +31,9 @@ class ExecutionCharacteristicsModel(BaseModel):
     normalize_min: int = 0
     normalize_max: int = 100
     elitism: bool = False
+    steady_state: bool = False
+    steady_state_without_duplicateds: bool = False
+    gap: float = 0.0
 
     class Config:
         schema_extra = {
