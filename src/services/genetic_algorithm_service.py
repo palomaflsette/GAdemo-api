@@ -13,8 +13,14 @@ class GeneticAlgorithmService:
         self.executor = GeneticAlgorithmExecutor()
 
     def run_experiments(self, func_str: str, exec_chars: ExecutionCharacteristics, cross_type: CrossoverType, num_experiments: int):
-        #func = Function(func_str)
         best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation = self.executor.run_multiple_experiments(
             func_str, exec_chars, cross_type, num_experiments
         )
+        # Convertendo os resultados para tipos de dados padrão
+        best_experiment_values = [float(val) for val in best_experiment_values]
+        best_individuals_per_generation = [
+            [float(val) for val in generation] for generation in best_individuals_per_generation]
+        mean_best_individuals_per_generation = [
+            float(val) for val in mean_best_individuals_per_generation]
+
         return best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation

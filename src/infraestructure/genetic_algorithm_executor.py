@@ -1,8 +1,7 @@
 import random
 import numpy as np
-from deap import base, creator, tools, algorithms
+from deap import base, creator, tools
 import sympy as sp
-import matplotlib.pyplot as plt
 
 
 class GeneticAlgorithmExecutor:
@@ -15,9 +14,20 @@ class GeneticAlgorithmExecutor:
         func = sp.sympify(func_str)
         return func, x, y
 
+    def normalize_fitness(self, fitnesses, min_val, max_val):
+        """Aplica normalização linear aos valores de fitness."""
+        min_fit = min(fitnesses)
+        max_fit = max(fitnesses)
+        if min_fit == max_fit:
+            return [min_val for _ in fitnesses]  # Evita divisão por zero
+        return [
+            (min_val + (max_val - min_val) * (fit - min_fit) / (max_fit - min_fit))
+            for fit in fitnesses
+        ]
+
     def run_genetic_algorithm(self, func, exec_chars, cross_type):
         func, x, y = self.get_function(func)
-        
+
         # Definir o tipo de fitness (maximização ou minimização)
         creator.create("Fitness", base.Fitness, weights=(
             1.0 if exec_chars.maximize else -1.0,))
@@ -26,11 +36,11 @@ class GeneticAlgorithmExecutor:
         toolbox = base.Toolbox()
         interval = exec_chars.interval
         toolbox.register("attr_float", random.uniform,
-                        interval[0], interval[1])
+                         interval[0], interval[1])
         toolbox.register("individual", tools.initRepeat,
-                        creator.Individual, toolbox.attr_float, n=2)
+                         creator.Individual, toolbox.attr_float, n=2)
         toolbox.register("population", tools.initRepeat,
-                        list, toolbox.individual)
+                         list, toolbox.individual)
 
         toolbox.register("evaluate", self.evaluate_func, func=func, x=x, y=y)
         toolbox.register("mate", tools.cxOnePoint if cross_type.one_point else (
@@ -61,6 +71,14 @@ class GeneticAlgorithmExecutor:
 
         # Evolução
         for gen in range(exec_chars.num_generations):
+            if exec_chars.normalize_linear:
+                # Aplicar normalização linear aos valores de fitness
+                fitnesses = [ind.fitness.values[0] for ind in population]
+                normalized_fitnesses = self.normalize_fitness(
+                    fitnesses, exec_chars.normalize_min, exec_chars.normalize_max)
+                for ind, norm_fit in zip(population, normalized_fitnesses):
+                    ind.fitness.values = (norm_fit,)
+
             offspring = toolbox.select(population, len(population))
             offspring = list(map(toolbox.clone, offspring))
 
