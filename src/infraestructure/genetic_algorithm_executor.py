@@ -79,7 +79,14 @@ class GeneticAlgorithmExecutor:
                 for ind, norm_fit in zip(population, normalized_fitnesses):
                     ind.fitness.values = (norm_fit,)
 
-            offspring = toolbox.select(population, len(population))
+            # Seleção dos melhores indivíduos (elitismo)
+            if exec_chars.elitism:
+                elite = tools.selBest(population, 1)
+                offspring = toolbox.select(population, len(population) - 1)
+                offspring.append(elite[0])
+            else:
+                offspring = toolbox.select(population, len(population))
+
             offspring = list(map(toolbox.clone, offspring))
 
             for child1, child2 in zip(offspring[::2], offspring[1::2]):
