@@ -30,6 +30,7 @@ class ExecutionCharacteristicsModel(BaseModel):
     normalize_linear: bool = False
     normalize_min: int = 0
     normalize_max: int = 100
+    elitism: bool = False
 
     class Config:
         schema_extra = {
