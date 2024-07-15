@@ -14,4 +14,3 @@ class ExecutionCharacteristics:
         self.maximize = maximize
         self.interval = interval
         self.crossover_type = crossover_type
-

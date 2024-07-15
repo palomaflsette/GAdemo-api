@@ -68,7 +68,8 @@ def run_experiments(
         "best_individuals_per_generation": best_individuals_per_generation,
         "mean_best_individuals_per_generation": mean_best_individuals_per_generation
     }
-
+    
+    
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -28,7 +28,7 @@ class GeneticAlgorithmExecutor:
     def run_genetic_algorithm(self, func, exec_chars, cross_type):
         func, x, y = self.get_function(func)
 
-        # Definir o tipo de fitness (maximização ou minimização)
+        # Define o tipo de fitness (maximização ou minimização)
         creator.create("Fitness", base.Fitness, weights=(
             1.0 if exec_chars.maximize else -1.0,))
         creator.create("Individual", list, fitness=creator.Fitness)
@@ -36,11 +36,11 @@ class GeneticAlgorithmExecutor:
         toolbox = base.Toolbox()
         interval = exec_chars.interval
         toolbox.register("attr_float", random.uniform,
-                         interval[0], interval[1])
+                        interval[0], interval[1])
         toolbox.register("individual", tools.initRepeat,
-                         creator.Individual, toolbox.attr_float, n=2)
+                        creator.Individual, toolbox.attr_float, n=2)
         toolbox.register("population", tools.initRepeat,
-                         list, toolbox.individual)
+                        list, toolbox.individual)
 
         toolbox.register("evaluate", self.evaluate_func, func=func, x=x, y=y)
         toolbox.register("mate", tools.cxOnePoint if cross_type.one_point else (
