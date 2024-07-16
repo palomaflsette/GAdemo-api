@@ -2,18 +2,17 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
-
-from infraestructure.genetic_algorithm_executor import GeneticAlgorithmExecutor
-from domain.execution_characteristics import ExecutionCharacteristics
 from domain.crossover_type import CrossoverType
+from domain.execution_characteristics import ExecutionCharacteristics
+from infraestructure.genetic_algorithm_executor import GeneticAlgorithmExecutor
 
 
 class GeneticAlgorithmService:
     def __init__(self):
         self.executor = GeneticAlgorithmExecutor()
 
-    def run_experiments(self, func_str: str, exec_chars: ExecutionCharacteristics, cross_type: CrossoverType, num_experiments: int):
-        best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation = self.executor.run_multiple_experiments(
+    async def run_experiments(self, func_str: str, exec_chars: ExecutionCharacteristics, cross_type: CrossoverType, num_experiments: int):
+        best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation = await self.executor.run_multiple_experiments(
             func_str, exec_chars, cross_type, num_experiments
         )
         # Convertendo os resultados para tipos de dados padrão

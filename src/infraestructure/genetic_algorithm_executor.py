@@ -2,6 +2,8 @@ import random
 import numpy as np
 from deap import base, creator, tools
 import sympy as sp
+import concurrent.futures
+from numba import jit
 
 
 class GeneticAlgorithmExecutor:
@@ -49,7 +51,8 @@ class GeneticAlgorithmExecutor:
         toolbox.register("evaluate", self.evaluate_func, func=func, x=x, y=y)
         toolbox.register("mate", tools.cxOnePoint if cross_type.one_point else (
             tools.cxTwoPoint if cross_type.two_point else tools.cxUniform))
-        toolbox.register("mutate", self.mutate_within_bounds, interval=interval, mu=0, sigma=1, indpb=0.1)
+        toolbox.register("mutate", self.mutate_within_bounds,
+                        interval=interval, mu=0, sigma=1, indpb=0.1)
         toolbox.register("select", tools.selTournament, tournsize=3)
 
         population = toolbox.population(n=exec_chars.population_size)
@@ -150,27 +153,30 @@ class GeneticAlgorithmExecutor:
 
         return population, logbook, best_individuals
 
-    def run_multiple_experiments(self, func, exec_chars, cross_type, num_experiments):
+    async def run_multiple_experiments(self, func, exec_chars, cross_type, num_experiments):
         best_experiment_values = []
         best_individuals_per_generation = []
 
-        for exp in range(num_experiments):
-            print(f"\nRodando experimento {exp + 1}/{num_experiments}")
-            _, logbook, best_individuals = self.run_genetic_algorithm(
-                func, exec_chars, cross_type)
-            best_experiment_values.append(best_individuals[-1][2])
-            if exp == 0:
-                for gen, best_ind, best_fit in best_individuals:
-                    best_individuals_per_generation.append([best_ind])
-            else:
-                for i, (gen, best_ind, best_fit) in enumerate(best_individuals):
-                    best_individuals_per_generation[i].append(best_ind)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(
+                self.run_genetic_algorithm, func, exec_chars, cross_type) for _ in range(num_experiments)]
+            for future in concurrent.futures.as_completed(futures):
+                _, logbook, best_individuals = future.result()
+                best_experiment_values.append(best_individuals[-1][2])
+                if not best_individuals_per_generation:
+                    for gen, best_ind, best_fit in best_individuals:
+                        best_individuals_per_generation.append([best_ind])
+                else:
+                    for i, (gen, best_ind, best_fit) in enumerate(best_individuals):
+                        best_individuals_per_generation[i].append(best_ind)
 
         mean_best_individuals_per_generation = [
-            [float(np.mean([ind[i] for ind in generation])) for i in range(len(generation[0]))]
+            [float(np.mean([ind[i] for ind in generation]))
+            for i in range(len(generation[0]))]
             for generation in best_individuals_per_generation]
 
         return best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation
+
 
     def evaluate_func(self, individual, func, x, y=None):
         if y is not None:
@@ -181,11 +187,13 @@ class GeneticAlgorithmExecutor:
             result = func.subs({x: x_val})
         return float(result),  # Retorna como uma tupla contendo um float
 
+
     def mutate_within_bounds(self, individual, interval, mu, sigma, indpb):
         """Mutate an individual ensuring the mutation stays within bounds."""
         for i in range(len(individual)):
             if random.random() < indpb:
                 individual[i] += random.gauss(mu, sigma)
                 # Ensure the mutation is within bounds
-                individual[i] = max(min(individual[i], interval[1]), interval[0])
+                individual[i] = max(
+                    min(individual[i], interval[1]), interval[0])
         return individual,
