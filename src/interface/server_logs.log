@@ -1,0 +1,62 @@
+2024-07-16 17:12:50,029 - Logging is configured
+2024-07-16 17:13:02,783 - run_experiments endpoint called
+2024-07-16 17:13:04,053 - run_experiments completed
+2024-07-16 17:14:31,053 - Logging is configured
+2024-07-16 17:14:33,774 - Logging is configured
+2024-07-16 17:14:39,591 - Logging is configured
+2024-07-16 17:14:41,456 - Logging is configured
+2024-07-16 19:26:35,602 - run_experiments endpoint called
+2024-07-16 19:26:37,213 - run_experiments completed
+2024-07-16 22:59:07,281 - Logging is configured
+2024-07-16 23:09:07,871 - Logging is configured
+2024-07-16 23:09:09,951 - Logging is configured
+2024-07-16 23:22:55,862 - run_experiments endpoint called
+2024-07-16 23:22:57,735 - run_experiments completed
+2024-07-16 23:23:07,034 - run_experiments endpoint called
+2024-07-16 23:23:08,051 - run_experiments completed
+2024-07-16 23:38:53,629 - run_experiments endpoint called
+2024-07-16 23:38:53,835 - run_experiments completed
+2024-07-17 00:32:30,492 - Received num_experiments: 1
+2024-07-17 00:32:30,493 - Received exec_chars: num_generations=1 population_size=2 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[0, 1] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=False gap=0.1
+2024-07-17 00:32:37,935 - Received num_experiments: 1
+2024-07-17 00:32:37,935 - Received exec_chars: num_generations=1 population_size=2 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[0, 1] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=False gap=0.1
+2024-07-17 00:32:39,679 - Received num_experiments: 1
+2024-07-17 00:32:39,679 - Received exec_chars: num_generations=1 population_size=2 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[0, 1] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=False gap=0.1
+2024-07-17 00:32:48,084 - Received num_experiments: 1
+2024-07-17 00:32:48,085 - Received exec_chars: num_generations=1 population_size=2 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[0, 1] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=False gap=0.1
+2024-07-17 00:33:04,467 - Received num_experiments: 1
+2024-07-17 00:33:04,467 - Received exec_chars: num_generations=1 population_size=2 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[0, 1] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=False gap=0.1
+2024-07-17 00:37:08,060 - Received num_experiments: 2
+2024-07-17 00:37:08,060 - Received exec_chars: num_generations=1 population_size=2 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[0, 1] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=False gap=0.1
+2024-07-17 00:37:31,054 - Received num_experiments: 2
+2024-07-17 00:37:31,054 - Received exec_chars: num_generations=1 population_size=2 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[0, 1] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=False gap=0.1
+2024-07-17 00:38:08,393 - Received num_experiments: 1
+2024-07-17 00:38:08,393 - Received exec_chars: num_generations=5 population_size=50 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[0, 1] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=False gap=0.1
+2024-07-17 00:38:37,462 - Received num_experiments: 1
+2024-07-17 00:38:37,462 - Received exec_chars: num_generations=100 population_size=200 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[0, 1] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=False gap=0.1
+2024-07-17 00:39:49,619 - Received num_experiments: 1
+2024-07-17 00:39:49,619 - Received exec_chars: num_generations=100 population_size=200 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-20, 20] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 00:42:33,490 - Received num_experiments: 1
+2024-07-17 00:42:33,491 - Received exec_chars: num_generations=100 population_size=200 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 00:52:11,551 - Received num_experiments: 1
+2024-07-17 00:52:11,551 - Received exec_chars: num_generations=2 population_size=5 crossover_rate=1.0 mutation_rate=1.0 maximize=True interval=[0, 10] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 01:00:27,377 - Received num_experiments: 1
+2024-07-17 01:00:27,381 - Received exec_chars: num_generations=1 population_size=20 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 01:01:00,277 - Received num_experiments: 1
+2024-07-17 01:01:00,277 - Received exec_chars: num_generations=1 population_size=20 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 13:21:01,725 - Received num_experiments: 1
+2024-07-17 13:21:01,727 - Received exec_chars: num_generations=1 population_size=20 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 16:54:12,257 - Received num_experiments: 1
+2024-07-17 16:54:12,258 - Received exec_chars: num_generations=1 population_size=20 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 16:56:32,632 - Received num_experiments: 1
+2024-07-17 16:56:32,632 - Received exec_chars: num_generations=4 population_size=20 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 16:57:07,866 - Received num_experiments: 2
+2024-07-17 16:57:07,866 - Received exec_chars: num_generations=4 population_size=20 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 16:58:10,479 - Received num_experiments: 1
+2024-07-17 16:58:10,479 - Received exec_chars: num_generations=2 population_size=20 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 16:58:17,698 - Received num_experiments: 1
+2024-07-17 16:58:17,698 - Received exec_chars: num_generations=2 population_size=20 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 16:58:59,112 - Received num_experiments: 2
+2024-07-17 16:58:59,113 - Received exec_chars: num_generations=2 population_size=20 crossover_rate=0.65 mutation_rate=0.8 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0
+2024-07-17 17:01:19,487 - Received num_experiments: 2
+2024-07-17 17:01:19,487 - Received exec_chars: num_generations=2 population_size=20 crossover_rate=1.0 mutation_rate=1.0 maximize=True interval=[-2, 2] crossover_type=CrossoverTypeModel(one_point=True, two_point=False, uniform=False) normalize_linear=False normalize_min=0 normalize_max=100 elitism=False steady_state=False steady_state_without_duplicateds=True gap=80.0

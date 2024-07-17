@@ -1,16 +1,35 @@
 import sys
 import os
+import datetime
+import logging
+import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
+
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
-
+from services.genetic_algorithm_service import GeneticAlgorithmService
 from typing import List
 from pydantic import BaseModel
 from fastapi import FastAPI, Query, Body
 
-from services.genetic_algorithm_service import GeneticAlgorithmService
 
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
 
 app = FastAPI()
+
+# Configurando o CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+log_file_path = os.path.join(os.path.dirname(__file__), "server_logs.log")
+logging.basicConfig(filename=log_file_path, level=logging.INFO,
+                    format="%(asctime)s - %(message)s")
 
 
 class CrossoverTypeModel(BaseModel):
@@ -35,32 +54,18 @@ class ExecutionCharacteristicsModel(BaseModel):
     steady_state_without_duplicateds: bool = False
     gap: float = 0.0
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "num_generations": 0,
-                "population_size": 0,
-                "crossover_rate": 0,
-                "mutation_rate": 0,
-                "maximize": True,
-                "interval": [0],
-                "crossover_type": {
-                    "one_point": True,
-                    "two_point": False,
-                    "uniform": False
-                }
-            }
-        }
-        
 
 @app.post("/run-experiments")
-def run_experiments(
+async def run_experiments(
     func_str: str = Query(...),
     num_experiments: int = Query(...),
     exec_chars: ExecutionCharacteristicsModel = Body(...)
 ):
+    logging.info(f"Received num_experiments: {num_experiments}")
+    logging.info(f"Received exec_chars: {exec_chars}")
+
     ga_service = GeneticAlgorithmService()
-    best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation = ga_service.run_experiments(
+    best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation = await ga_service.run_experiments(
         func_str, exec_chars, exec_chars.crossover_type, num_experiments
     )
     return {
@@ -70,5 +75,12 @@ def run_experiments(
     }
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    logging.info("Starting server at: %s",
+                datetime.datetime.now().strftime("%H:%M:%S"))
+    try:
+        uvicorn.run(app, host="0.0.0.0", port=8000, workers=40)
+    except Exception as e:
+        logging.error("Exception occurred: %s", e)
+    finally:
+        logging.info("Server stopped at: %s",
+                    datetime.datetime.now().strftime("%H:%M:%S"))

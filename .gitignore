@@ -4,3 +4,5 @@ __pycache__
 quarentine
 callback_pop_example
 callback_plot_example
+test.py
+server_logs.log
