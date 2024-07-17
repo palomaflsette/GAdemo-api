@@ -3,6 +3,8 @@ import os
 import datetime
 import logging
 import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
+
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 from services.genetic_algorithm_service import GeneticAlgorithmService
@@ -11,7 +13,20 @@ from pydantic import BaseModel
 from fastapi import FastAPI, Query, Body
 
 
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
 app = FastAPI()
+
+# Configurando o CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 log_file_path = os.path.join(os.path.dirname(__file__), "server_logs.log")
 logging.basicConfig(filename=log_file_path, level=logging.INFO,
                     format="%(asctime)s - %(message)s")
@@ -40,13 +55,14 @@ class ExecutionCharacteristicsModel(BaseModel):
     gap: float = 0.0
 
 
-
 @app.post("/run-experiments")
 async def run_experiments(
     func_str: str = Query(...),
     num_experiments: int = Query(...),
     exec_chars: ExecutionCharacteristicsModel = Body(...)
 ):
+    logging.info(f"Received num_experiments: {num_experiments}")
+    logging.info(f"Received exec_chars: {exec_chars}")
 
     ga_service = GeneticAlgorithmService()
     best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation = await ga_service.run_experiments(
@@ -59,11 +75,12 @@ async def run_experiments(
     }
 
 if __name__ == "__main__":
-    logging.info("Starting server at: %s", datetime.datetime.now().strftime("%H:%M:%S"))
-    
+    logging.info("Starting server at: %s",
+                datetime.datetime.now().strftime("%H:%M:%S"))
     try:
         uvicorn.run(app, host="0.0.0.0", port=8000, workers=40)
     except Exception as e:
         logging.error("Exception occurred: %s", e)
     finally:
-        logging.info("Server stopped at: %s", datetime.datetime.now().strftime("%H:%M:%S"))
+        logging.info("Server stopped at: %s",
+                    datetime.datetime.now().strftime("%H:%M:%S"))
