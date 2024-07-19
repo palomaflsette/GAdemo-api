@@ -3,8 +3,6 @@ import numpy as np
 from deap import base, creator, tools
 import sympy as sp
 import concurrent.futures
-from numba import jit
-
 
 class GeneticAlgorithmExecutor:
     def __init__(self):
