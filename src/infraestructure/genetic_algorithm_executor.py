@@ -154,24 +154,31 @@ class GeneticAlgorithmExecutor:
 
     async def run_multiple_experiments(self, func, exec_chars, cross_type, num_experiments):
         best_experiment_values = []
-        best_individuals_per_generation = [[] for _ in range(num_experiments)]
+        best_individuals_per_experiment = []
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(
                 self.run_genetic_algorithm, func, exec_chars, cross_type) for _ in range(num_experiments)]
-            for i, future in enumerate(concurrent.futures.as_completed(futures)):
+            for future in concurrent.futures.as_completed(futures):
                 _, logbook, best_individuals = future.result()
                 best_experiment_values.append(best_individuals[-1][2])
-                for gen, best_ind, best_fit in best_individuals:
-                    best_individuals_per_generation[i].append(best_ind)
+                best_individuals_per_experiment.append(best_individuals)
 
-        mean_best_individuals_per_generation = [
-            [float(np.mean([best_individuals_per_generation[exp][gen][i] for exp in range(num_experiments)]))
-             for i in range(len(best_individuals_per_generation[0][0]))]
-            for gen in range(len(best_individuals_per_generation[0]))
+        # Organizar os indivíduos por geração e experimento
+        best_individuals_per_generation = [
+            [
+                best_individuals[gen] for best_individuals in best_individuals_per_experiment
+            ]
+            for gen in range(exec_chars.num_generations)
         ]
 
-        return best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation
+        # Calcular a média das aptidões dos melhores indivíduos por geração
+        average_fitness_best_individuals_per_generation = [
+            float(np.mean([fit for _, _, fit in generation]))
+            for generation in best_individuals_per_generation
+        ]
+
+        return best_experiment_values, best_individuals_per_experiment, average_fitness_best_individuals_per_generation
 
     def evaluate_func(self, individual, func, x, y=None):
         if y is not None:
