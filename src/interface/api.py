@@ -61,6 +61,8 @@ async def run_experiments(
     num_experiments: int = Query(...),
     exec_chars: ExecutionCharacteristicsModel = Body(...)
 ):
+    func_str = func_str.replace('^', '**')
+    
     logging.info(f"Received num_experiments: {num_experiments}")
     logging.info(f"Received exec_chars: {exec_chars}")
 
