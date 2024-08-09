@@ -37,21 +37,27 @@ class GeneticAlgorithmExecutor:
         toolbox = base.Toolbox()
         interval = exec_chars.interval
         toolbox.register("attr_float", random.uniform,
-                         interval[0], interval[1])
+                        interval[0], interval[1])
         if y is not None:
             toolbox.register("individual", tools.initRepeat,
-                             creator.Individual, toolbox.attr_float, n=2)
+                            creator.Individual, toolbox.attr_float, n=2)
         else:
             toolbox.register("individual", tools.initRepeat,
-                             creator.Individual, toolbox.attr_float, n=1)
+                            creator.Individual, toolbox.attr_float, n=1)
         toolbox.register("population", tools.initRepeat,
-                         list, toolbox.individual)
+                        list, toolbox.individual)
 
         toolbox.register("evaluate", self.evaluate_func, func=func, x=x, y=y)
-        toolbox.register("mate", tools.cxOnePoint if cross_type.one_point else (
-            tools.cxTwoPoint if cross_type.two_point else tools.cxUniform))
+
+        if cross_type.one_point:
+            toolbox.register("mate", tools.cxOnePoint)
+        elif cross_type.two_point:
+            toolbox.register("mate", tools.cxTwoPoint)
+        elif cross_type.uniform:
+            toolbox.register("mate", tools.cxUniform, indpb=0.5)
+
         toolbox.register("mutate", self.mutate_within_bounds,
-                         interval=interval, mu=0, sigma=1, indpb=0.1)
+                        interval=interval, mu=0, sigma=1, indpb=0.1)
         toolbox.register("select", tools.selTournament, tournsize=3)
 
         population = toolbox.population(n=exec_chars.population_size)
@@ -151,6 +157,7 @@ class GeneticAlgorithmExecutor:
                 (gen, best_individual[:], best_individual.fitness.values[0]))
 
         return population, logbook, best_individuals
+
 
     async def run_multiple_experiments(self, func, exec_chars, cross_type, num_experiments):
         best_experiment_values = []
