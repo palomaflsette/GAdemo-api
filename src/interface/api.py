@@ -1,17 +1,23 @@
+
+
 import sys
 import os
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
+from fastapi import FastAPI, Query, Body
+from pydantic import BaseModel
+from typing import List
 import datetime
 import logging
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
 from services.genetic_algorithm_service import GeneticAlgorithmService
-from typing import List
-from pydantic import BaseModel
-from fastapi import FastAPI, Query, Body
-
 
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
@@ -62,27 +68,29 @@ async def run_experiments(
     exec_chars: ExecutionCharacteristicsModel = Body(...)
 ):
     func_str = func_str.replace('^', '**')
-    
+
     logging.info(f"Received num_experiments: {num_experiments}")
     logging.info(f"Received exec_chars: {exec_chars}")
 
     ga_service = GeneticAlgorithmService()
-    best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation = await ga_service.run_experiments(
+    best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation, best_values_per_generation = await ga_service.run_experiments(
         func_str, exec_chars, exec_chars.crossover_type, num_experiments
     )
+
     return {
         "best_experiment_values": best_experiment_values,
         "best_individuals_per_generation": best_individuals_per_generation,
-        "mean_best_individuals_per_generation": mean_best_individuals_per_generation
+        "mean_best_individuals_per_generation": mean_best_individuals_per_generation,
+        "best_values_per_generation": best_values_per_generation
     }
 
 if __name__ == "__main__":
     logging.info("Starting server at: %s",
-                datetime.datetime.now().strftime("%H:%M:%S"))
+                 datetime.datetime.now().strftime("%H:%M:%S"))
     try:
         uvicorn.run(app, host="0.0.0.0", port=8000, workers=40)
     except Exception as e:
         logging.error("Exception occurred: %s", e)
     finally:
         logging.info("Server stopped at: %s",
-                    datetime.datetime.now().strftime("%H:%M:%S"))
+                     datetime.datetime.now().strftime("%H:%M:%S"))

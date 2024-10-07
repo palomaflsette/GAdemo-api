@@ -26,6 +26,15 @@ class GeneticAlgorithmExecutor:
             for fit in fitnesses
         ]
 
+    def get_best_individual_per_experiment(self, best_individuals_per_experiment):
+        best_individual_per_experiment = []
+        for experiment in best_individuals_per_experiment:
+            # Encontre o melhor indivíduo em cada experimento com base na aptidão
+            # A aptidão está no terceiro elemento de cada tupla
+            best_individual = max(experiment, key=lambda ind: ind[2])
+            best_individual_per_experiment.append(best_individual)
+        return best_individual_per_experiment
+
     def run_genetic_algorithm(self, func, exec_chars, cross_type):
         func, x, y = self.get_function(func)
 
@@ -37,15 +46,15 @@ class GeneticAlgorithmExecutor:
         toolbox = base.Toolbox()
         interval = exec_chars.interval
         toolbox.register("attr_float", random.uniform,
-                        interval[0], interval[1])
+                         interval[0], interval[1])
         if y is not None:
             toolbox.register("individual", tools.initRepeat,
-                            creator.Individual, toolbox.attr_float, n=2)
+                             creator.Individual, toolbox.attr_float, n=2)
         else:
             toolbox.register("individual", tools.initRepeat,
-                            creator.Individual, toolbox.attr_float, n=1)
+                             creator.Individual, toolbox.attr_float, n=1)
         toolbox.register("population", tools.initRepeat,
-                        list, toolbox.individual)
+                         list, toolbox.individual)
 
         toolbox.register("evaluate", self.evaluate_func, func=func, x=x, y=y)
 
@@ -57,7 +66,7 @@ class GeneticAlgorithmExecutor:
             toolbox.register("mate", tools.cxUniform, indpb=0.5)
 
         toolbox.register("mutate", self.mutate_within_bounds,
-                        interval=interval, mu=0, sigma=1, indpb=0.1)
+                         interval=interval, mu=0, sigma=1, indpb=0.1)
         toolbox.register("select", tools.selTournament, tournsize=3)
 
         population = toolbox.population(n=exec_chars.population_size)
@@ -158,18 +167,25 @@ class GeneticAlgorithmExecutor:
 
         return population, logbook, best_individuals
 
-
     async def run_multiple_experiments(self, func, exec_chars, cross_type, num_experiments):
         best_experiment_values = []
         best_individuals_per_experiment = []
+        best_values_per_generation = []
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(
                 self.run_genetic_algorithm, func, exec_chars, cross_type) for _ in range(num_experiments)]
             for future in concurrent.futures.as_completed(futures):
                 _, logbook, best_individuals = future.result()
+                # Melhor aptidão do último indivíduo
                 best_experiment_values.append(best_individuals[-1][2])
                 best_individuals_per_experiment.append(best_individuals)
+
+        # Organizar as aptidões (valores de fitness) por geração e por experimento
+        best_values_per_generation = [
+            [best_individual[2] for best_individual in experiment]
+            for experiment in best_individuals_per_experiment
+        ]
 
         # Organizar os indivíduos por geração e experimento
         best_individuals_per_generation = [
@@ -185,7 +201,7 @@ class GeneticAlgorithmExecutor:
             for generation in best_individuals_per_generation
         ]
 
-        return best_experiment_values, best_individuals_per_experiment, average_fitness_best_individuals_per_generation
+        return best_experiment_values, best_individuals_per_experiment, average_fitness_best_individuals_per_generation, best_values_per_generation
 
     def evaluate_func(self, individual, func, x, y=None):
         if y is not None:
