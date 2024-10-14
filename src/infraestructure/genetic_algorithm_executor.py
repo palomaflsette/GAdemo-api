@@ -10,9 +10,15 @@ class GeneticAlgorithmExecutor:
         pass
 
     def get_function(self, func_str):
-        """Aceita uma função matemática do usuário."""
+        """Aceita uma função matemática do usuário e transforma funções de uma variável em funções de duas variáveis."""
         x, y = sp.symbols('x y')
         func = sp.sympify(func_str)
+
+        # Verificar se a função depende apenas de 'x'
+        if len(func.free_symbols) == 1 and x in func.free_symbols:
+            # Se a função for de uma variável, criamos a versão em duas variáveis somando as duas partes
+            func = func + func.subs(x, y)
+    
         return func, x, y
 
     def normalize_fitness(self, fitnesses, min_val, max_val):
