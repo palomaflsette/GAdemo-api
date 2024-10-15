@@ -24,6 +24,11 @@ sys.path.insert(0, os.path.abspath(
 
 app = FastAPI()
 
+
+@app.get("/")
+def read_root():
+    return {"message": "API funcionando corretamente"}
+
 # Configurando o CORS
 app.add_middleware(
     CORSMiddleware,
