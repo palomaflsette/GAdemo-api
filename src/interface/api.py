@@ -48,7 +48,6 @@ class CrossoverTypeModel(BaseModel):
     two_point: bool = False
     uniform: bool = False
 
-
 class ExecutionCharacteristicsModel(BaseModel):
     num_generations: int
     population_size: int
@@ -65,7 +64,6 @@ class ExecutionCharacteristicsModel(BaseModel):
     steady_state_without_duplicateds: bool = False
     gap: float = 0.0
 
-
 @app.post("/run-experiments")
 async def run_experiments(
     func_str: str = Query(...),
@@ -74,11 +72,8 @@ async def run_experiments(
 ):
     func_str = func_str.replace('^', '**')
 
-    logging.info(f"Received num_experiments: {num_experiments}")
-    logging.info(f"Received exec_chars: {exec_chars}")
-
     ga_service = GeneticAlgorithmService()
-    best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation, best_values_per_generation = await ga_service.run_experiments(
+    best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation, best_values_per_generation, last_generation_values = await ga_service.run_experiments(
         func_str, exec_chars, exec_chars.crossover_type, num_experiments
     )
 
@@ -86,7 +81,8 @@ async def run_experiments(
         "best_experiment_values": best_experiment_values,
         "best_individuals_per_generation": best_individuals_per_generation,
         "mean_best_individuals_per_generation": mean_best_individuals_per_generation,
-        "best_values_per_generation": best_values_per_generation
+        "best_values_per_generation": best_values_per_generation,
+        "last_generation_values": last_generation_values
     }
 
 if __name__ == "__main__":

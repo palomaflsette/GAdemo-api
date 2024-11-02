@@ -1,5 +1,6 @@
 import sys
 import os
+import numpy as np
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
@@ -11,21 +12,25 @@ class GeneticAlgorithmService:
     def __init__(self):
         self.executor = GeneticAlgorithmExecutor()
 
-    async def run_experiments(self, func_str: str, exec_chars: ExecutionCharacteristics, cross_type: CrossoverType, num_experiments: int):
-        best_experiment_values, best_individuals_per_experiment, average_fitness_best_individuals_per_generation, best_values_per_generation = await self.executor.run_multiple_experiments(
-            func_str, exec_chars, cross_type, num_experiments
-        )
+    async def run_experiments(self, func_str, exec_chars, cross_type, num_experiments):
+        best_experiment_values = []
+        best_individuals_per_experiment = []
+        best_values_per_generation = []
+        last_generation_values_per_experiment = []
 
-        # Convertendo os resultados para tipos de dados padrão
-        best_experiment_values = [float(val) for val in best_experiment_values]
-        best_individuals_per_generation = [
-            [[float(allele) for allele in ind] for _, ind, _ in experiment] for experiment in best_individuals_per_experiment
-        ]
-        average_fitness_best_individuals_per_generation = [
-            float(fitness) for fitness in average_fitness_best_individuals_per_generation
-        ]
-        best_values_per_generation = [
-            [float(val) for val in generation] for generation in best_values_per_generation
+        for _ in range(num_experiments):
+            _, best_individuals, last_generation_values = self.executor.run_genetic_algorithm(
+                func_str, exec_chars, cross_type
+            )
+
+            best_experiment_values.append(best_individuals[-1][2])
+            best_individuals_per_experiment.append([ind[1] for ind in best_individuals])
+            best_values_per_generation.append([ind[2] for ind in best_individuals])
+            last_generation_values_per_experiment.append(last_generation_values)
+
+        mean_best_individuals_per_generation = [
+            float(np.mean([best_values_per_generation[exp][gen] for exp in range(num_experiments)]))
+            for gen in range(exec_chars.num_generations)
         ]
 
-        return best_experiment_values, best_individuals_per_generation, average_fitness_best_individuals_per_generation, best_values_per_generation
+        return best_experiment_values, best_individuals_per_experiment, mean_best_individuals_per_generation, best_values_per_generation, last_generation_values_per_experiment
