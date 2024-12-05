@@ -10,8 +10,8 @@ COPY . .
 
 EXPOSE 8000
 
-VOLUME ./src /gademo/src
+VOLUME ./src/app /gademo/src/app
 
-WORKDIR /gademo/src/interface
+WORKDIR /gademo/src/app/interface
 
-ENTRYPOINT ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+ENTRYPOINT ["uvicorn", "src.app.interface.api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
