@@ -5,6 +5,17 @@ import sympy as sp
 import concurrent.futures
 
 
+def calculate_elite_count(population_size):
+    if population_size <= 5:
+        return 0
+    elif 6 <= population_size <= 10:
+        return 1
+    elif 11 <= population_size <= 20:
+        return 2
+    else:  # População maior que 20
+        return 5
+
+
 class GeneticAlgorithmExecutor:
     def __init__(self):
         pass
@@ -131,9 +142,12 @@ class GeneticAlgorithmExecutor:
                 population[:] = offspring
 
             if exec_chars.elitism:
-                best_individual = tools.selBest(population, 1)[0]
-                if best_individual not in population:
-                    population[-1] = best_individual
+                elite_count = calculate_elite_count(len(population))  # Função para calcular a quantidade de elitismo
+                best_individuals = tools.selBest(population, elite_count)
+                for i, best_ind in enumerate(best_individuals):
+                    if best_ind not in population:
+                        population[-(i + 1)] = best_ind
+
 
             best_individual = tools.selBest(population, 1)[0]
             best_individuals.append(
