@@ -10,10 +10,8 @@ def calculate_elite_count(population_size):
         return 0
     elif 6 <= population_size <= 10:
         return 1
-    elif 11 <= population_size <= 20:
+    else:  # População maior que 10
         return 2
-    else:  # População maior que 20
-        return 5
 
 
 class GeneticAlgorithmExecutor:

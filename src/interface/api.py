@@ -2,7 +2,7 @@
 
 import sys
 import os
-
+import time
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
@@ -73,16 +73,24 @@ async def run_experiments(
     func_str = func_str.replace('^', '**')
 
     ga_service = GeneticAlgorithmService()
+    
+    start_time = time.time()
+    
     best_experiment_values, best_individuals_per_generation, mean_best_individuals_per_generation, best_values_per_generation, last_generation_values = await ga_service.run_experiments(
         func_str, exec_chars, exec_chars.crossover_type, num_experiments
     )
+    
+    end_time = time.time()
+    # Calcula o tempo de execução
+    execution_time = end_time - start_time
 
     return {
         "best_experiment_values": best_experiment_values,
         "best_individuals_per_generation": best_individuals_per_generation,
         "mean_best_individuals_per_generation": mean_best_individuals_per_generation,
         "best_values_per_generation": best_values_per_generation,
-        "last_generation_values": last_generation_values
+        "last_generation_values": last_generation_values,
+        "execution_time_seconds": execution_time
     }
 
 if __name__ == "__main__":
