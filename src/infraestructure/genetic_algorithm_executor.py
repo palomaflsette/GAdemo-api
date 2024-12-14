@@ -140,11 +140,13 @@ class GeneticAlgorithmExecutor:
                 population[:] = offspring
 
             if exec_chars.elitism:
-                elite_count = calculate_elite_count(len(population))  # Função para calcular a quantidade de elitismo
-                best_individuals = tools.selBest(population, elite_count)
-                for i, best_ind in enumerate(best_individuals):
-                    if best_ind not in population:
-                        population[-(i + 1)] = best_ind
+                elite_count = calculate_elite_count(len(population))  # Função para calcular o número de elites
+                if elite_count > 0:  # Somente execute se houver elites para selecionar
+                    elites = tools.selBest(population, elite_count)
+                    for elite in elites:
+                        if elite not in population:
+                            population.append(elite)
+
 
 
             best_individual = tools.selBest(population, 1)[0]
