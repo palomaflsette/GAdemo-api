@@ -88,9 +88,14 @@ class GeneticAlgorithmExecutor:
                     ind.fitness.values = (norm_fit,)
 
             if exec_chars.steady_state or exec_chars.steady_state_without_duplicateds:
-                gap = int(exec_chars.gap * len(population))
+                # Garante que o valor de gap é tratado como porcentagem
+                gap = exec_chars.gap
+                gap = gap / 100
+                gap = max(1, int(gap * len(population)))  # Garante pelo menos 1 indivíduo selecionado
+
                 offspring = toolbox.select(population, gap)
                 offspring = list(map(toolbox.clone, offspring))
+
                 for child1, child2 in zip(offspring[::2], offspring[1::2]):
                     if random.random() < exec_chars.crossover_rate:
                         toolbox.mate(child1, child2)
@@ -102,19 +107,18 @@ class GeneticAlgorithmExecutor:
                         toolbox.mutate(mutant)
                         del mutant.fitness.values
 
-                invalid_ind = [
-                    ind for ind in offspring if not ind.fitness.valid]
+                invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
                 fitnesses = map(toolbox.evaluate, invalid_ind)
                 for ind, fit in zip(invalid_ind, fitnesses):
                     ind.fitness.values = fit
 
                 if exec_chars.steady_state_without_duplicateds:
-                    offspring = [
-                        ind for ind in offspring if ind not in population]
+                    # Remove duplicatas
+                    offspring = [ind for ind in offspring if ind not in population]
 
                 population.extend(offspring)
-                population.sort(key=lambda ind: ind.fitness.values,
-                                reverse=exec_chars.maximize)
+                # Ordena a população e limita o tamanho para a população original
+                population.sort(key=lambda ind: ind.fitness.values, reverse=exec_chars.maximize)
                 population = population[:exec_chars.population_size]
             else:
                 offspring = toolbox.select(population, len(population))
