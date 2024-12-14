@@ -109,7 +109,7 @@ http://127.0.0.1:8000/docs
 
 ### **Exemplos de Uso**
 
-#### **Endpoint: `/run-genetic-algorithm`**
+#### **Endpoint: `https://gademo-api.onrender.com/run-experiments?func_str=x%2A%2A2%20%2B%20y%2A%2A2&num_experiments=1`**
 
 Executa o algoritmo genético com os parâmetros fornecidos.
 
@@ -118,20 +118,26 @@ Executa o algoritmo genético com os parâmetros fornecidos.
 
 ```json
 {
-    "func": "x**2 + y**2",
-    "exec_chars": {
-        "maximize": false,
-        "population_size": 100,
-        "num_generations": 50,
-        "crossover_rate": 0.65,
-        "mutation_rate": 0.1,
-        "interval": [-10, 10]
-    },
-    "cross_type": {
-        "one_point": true,
-        "two_point": false,
-        "uniform": false
-    }
+  "num_generations": 2,
+  "population_size": 5,
+  "crossover_rate": 65,
+  "mutation_rate": 0.80,
+  "maximize": true,
+  "interval": [
+    -100,100
+  ],
+  "crossover_type": {
+    "one_point": true,
+    "two_point": false,
+    "uniform": false
+  },
+  "normalize_linear": false,
+  "normalize_min": 0,
+  "normalize_max": 100,
+  "elitism": false,
+  "steady_state": false,
+  "steady_state_without_duplicateds": false,
+  "gap": 0
 }
 ```
 
@@ -139,12 +145,41 @@ Executa o algoritmo genético com os parâmetros fornecidos.
 
 ```json
 {
-    "best_solution": {
-        "generation": 50,
-        "fitness": 0.001,
-        "values": [0.0, 0.0]
-    },
-    "last_generation_values": [-0.001, 0.001, 0.005]
+  "best_experiment_values": [
+    14273.174806266543
+  ],
+  "best_individuals_per_generation": [
+    [
+      [
+        86.20652119245678,
+        82.71033109374736
+      ],
+      [
+        85.65159920216274,
+        83.2885247821008
+      ]
+    ]
+  ],
+  "mean_best_individuals_per_generation": [
+    14272.56316574281,
+    14273.174806266543
+  ],
+  "best_values_per_generation": [
+    [
+      14272.56316574281,
+      14273.174806266543
+    ]
+  ],
+  "last_generation_values": [
+    [
+      14093.589115662799,
+      14273.174806266543,
+      10723.882196624947,
+      14272.56316574281,
+      14272.56316574281
+    ]
+  ],
+  "execution_time_seconds": 0.2980344295501709
 }
 ```
 
@@ -154,8 +189,8 @@ Executa o algoritmo genético com os parâmetros fornecidos.
 
 A aplicação está hospedada na plataforma Render:
 
-- **Frontend**: [https://link-do-front.render.com](https://link-do-front.render.com)
-- **Documentação da API (Swagger)**: [https://link-da-api.render.com](https://link-da-api.render.com)
+- **Frontend**: [https://gademo-zxig.onrender.com](https://gademo-zxig.onrender.com)
+- **Documentação da API (Swagger)**: [https://gademo-api.onrender.com/docs](https://gademo-api.onrender.com/docs)
 
 ---
 
