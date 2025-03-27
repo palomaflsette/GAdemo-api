@@ -12,20 +12,14 @@ import concurrent.futures  # Permite execução paralela de experimentos
 def calculate_elite_count(population_size):
     """
     Retorna o número de indivíduos que serão preservados como elites com base no tamanho da população.
-    - População <= 5: nenhum indivíduo é elitizado.
-    - População entre 6 e 10: 1 indivíduo é elitizado.
-    - População > 10: 2 indivíduos são elitizados.
+    Se a população for par -> elitizar 2
+    Se o tamanho da população for ímpar -> elitizar 1
     """
-    if population_size <= 5:
-        return 0
-    elif 6 <= population_size <= 10:
-        return 1
-    else:
+    if population_size % 2 == 0:
         return 2
+    else: return 1
 
 # Classe principal para execução do Algoritmo Genético
-
-
 class GeneticAlgorithmExecutor:
     def __init__(self):
         pass
