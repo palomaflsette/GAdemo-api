@@ -6,6 +6,9 @@ A **GADEMO** é uma plataforma voltada para a execução de algoritmos genético
 
 A API foi construída em Python, utilizando práticas modernas de programação, como o padrão **Domain-Driven Design (DDD)**.
 
+- Atualizações instantâneas podem ser vistas [aqui](https://gademo-zxig.onrender.com).
+- Atualizações consolidadas são disponibilizadas no servidor da universidade [através deste link](https://www.maxwell.vrac.puc-rio.br/projetosEspeciais/GADEMO/index.html).
+- Mais informações disponíveis na [documentação](https://gademo.readthedocs.io/en/latest/).
 ---
 
 ### **Funcionalidades**
@@ -109,7 +112,7 @@ http://127.0.0.1:8000/docs
 
 ### **Exemplos de Uso**
 
-#### **Endpoint: `https://gademo-api.onrender.com/run-experiments?func_str=x%2A%2A2%20%2B%20y%2A%2A2&num_experiments=1`**
+#### **Endpoint: `https://127.0.0.1:8000/run-experiments?func_str=x%2A%2A2%20%2B%20y%2A%2A2&num_experiments=1`**
 
 Executa o algoritmo genético com os parâmetros fornecidos.
 
