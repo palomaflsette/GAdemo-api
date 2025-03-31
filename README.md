@@ -1,4 +1,4 @@
-# **GADEMO API**
+# **GADemo API**
 
 ### **Descrição**
 
