@@ -67,8 +67,8 @@ class GeneticAlgorithmExecutor:
             toolbox.register("mate", tools.cxUniform, indpb=0.5)
 
         toolbox.register("mutate", self.mutate_within_bounds,
-                         interval=interval, mu=0, sigma=1, indpb=0.1)
-        toolbox.register("select", tools.selTournament, tournsize=3)
+                         interval=interval, mu=0, sigma=1, indpb=0.5)
+        toolbox.register("select", tools.selRoulette)
 
         population = toolbox.population(n=exec_chars.population_size)
 
@@ -91,6 +91,8 @@ class GeneticAlgorithmExecutor:
                 gap = max(1, int(gap * len(population)))
                 offspring = toolbox.select(population, gap)
                 offspring = list(map(toolbox.clone, offspring))
+                random.shuffle(offspring)
+
 
                 for child1, child2 in zip(offspring[::2], offspring[1::2]):
                     if random.random() < exec_chars.crossover_rate:
@@ -157,6 +159,8 @@ class GeneticAlgorithmExecutor:
                 (gen, best_individual[:], best_individual.fitness.values[0]))
 
         last_generation_values = [ind.fitness.values[0] for ind in population]
+        # print(exec_chars.mutation_rate)
+        # print(exec_chars.crossover_rate)
         return population, best_individuals, last_generation_values
 
     async def run_multiple_experiments(self, func, exec_chars, cross_type, num_experiments):
