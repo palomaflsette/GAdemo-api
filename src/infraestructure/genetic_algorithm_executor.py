@@ -26,10 +26,15 @@ class GeneticAlgorithmExecutor:
 
     def get_function(self, func_str):
         x, y = sp.symbols('x y')
-        func = sp.sympify(func_str)
-        if len(func.free_symbols) == 1 and x in func.free_symbols:
-            func = func + func.subs(x, y)
+        func_expr = sp.sympify(func_str)
+
+        # Trata o caso de função com apenas uma variável (x)
+        if len(func_expr.free_symbols) == 1 and x in func_expr.free_symbols:
+            func_expr = func_expr + func_expr.subs(x, y)
+
+        func = sp.lambdify((x, y), func_expr, "numpy")
         return func, x, y
+
 
     def normalize_fitness(self, fitnesses, min_val, max_val):
         min_fit = min(fitnesses)
@@ -67,7 +72,7 @@ class GeneticAlgorithmExecutor:
             toolbox.register("mate", tools.cxUniform, indpb=0.5)
 
         toolbox.register("mutate", self.mutate_within_bounds,
-                         interval=interval, mu=0, sigma=1, indpb=0.5)
+                         interval=interval, mu=0, sigma=1, indpb=0.7)
         toolbox.register("select", tools.selRoulette)
 
         population = toolbox.population(n=exec_chars.population_size)
@@ -211,11 +216,12 @@ class GeneticAlgorithmExecutor:
     def evaluate_func(self, individual, func, x, y=None):
         if y is not None:
             x_val, y_val = individual
-            result = func.subs({x: x_val, y: y_val})
+            result = func(x_val, y_val)
         else:
             x_val = individual[0]
-            result = func.subs({x: x_val})
+            result = func(x_val, x_val)  # duplicando para manter 2D
         return float(result),
+
 
     def mutate_within_bounds(self, individual, interval, mu, sigma, indpb):
         for i in range(len(individual)):
