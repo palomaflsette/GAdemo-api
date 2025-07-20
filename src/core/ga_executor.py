@@ -9,7 +9,6 @@ import sympy as sp
 import concurrent.futures
 from deap import base, creator, tools
 
-# Importa o modelo de parâmetros unifiaado do domínio
 from domain.execution_parameters import ExecutionParameters
 
 
@@ -159,12 +158,9 @@ class GeneticAlgorithmExecutor:
 
           normalized_values = []
           for fit in fitnesses:
-               # Calcula o valor normalizado
                norm_val = min_val + (max_val - min_val) * \
                     (fit - min_fit) / (max_fit - min_fit)
 
-               # --- LINHA DA CORREÇÃO (CLAMPING) ---
-               # Garante que o resultado nunca saia do intervalo [min_val, max_val]
                final_val = max(min_val, min(norm_val, max_val))
                normalized_values.append(final_val)
 
@@ -289,7 +285,6 @@ class GeneticAlgorithmExecutor:
                x_val = individual[0]
                result = func(x_val, x_val) 
 
-          # DEAP espera que o fitness seja uma tupla
           return float(result),
 
      def _mutate_within_bounds(self, individual: list, interval: list, mu: float, sigma: float, indpb: float) -> tuple:
@@ -299,7 +294,7 @@ class GeneticAlgorithmExecutor:
           """
           for i in range(len(individual)):
                if random.random() < indpb:
-                    # Adiciona o ruído gaussiano
+                    # ruído gaussiano
                     individual[i] += random.gauss(mu, sigma)
                     individual[i] = max(interval[0], min(individual[i], interval[1]))
                     
