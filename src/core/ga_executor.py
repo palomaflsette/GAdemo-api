@@ -9,7 +9,7 @@ import sympy as sp
 import concurrent.futures
 from deap import base, creator, tools
 
-# Importa o modelo de parâmetros unificado do domínio
+# Importa o modelo de parâmetros unifiaado do domínio
 from domain.execution_parameters import ExecutionParameters
 
 
@@ -27,56 +27,49 @@ class GeneticAlgorithmExecutor:
      def __init__(self):
           pass
 
+ 
      def _run_single_experiment(self, func_str: str, params: ExecutionParameters) -> tuple:
           """
           Executa uma única rodada do algoritmo genético.
-          Renomeado para _run_single_experiment para indicar que é um método interno.
+          Esta versão garante que o valor logado no histórico seja sempre o fitness BRUTO,
+          que é o valor informativo para análise de desempenho.
           """
-          # A configuração do DEAP é feita aqui, por execução, para garantir que os
-          # parâmetros de cada chamada da API sejam respeitados.
-
-          # O 'creator' do DEAP pode reclamar se tentarmos registrar a mesma classe
-          # múltiplas vezes, então deletamos antes para garantir um estado limpo.
           if "Fitness" in creator.__dict__:
-              del creator.Fitness
+               del creator.Fitness
           if "Individual" in creator.__dict__:
-              del creator.Individual
-
+               del creator.Individual
           creator.create("Fitness", base.Fitness, weights=(
-              1.0 if params.maximize else -1.0,))
+               1.0 if params.maximize else -1.0,))
           creator.create("Individual", list, fitness=creator.Fitness)
-
           func, x, y = self._get_function(func_str)
           toolbox = self._setup_toolbox(func, x, y, params)
-
           population = toolbox.population(n=params.population_size)
-
-          # Avaliação inicial da população
           fitnesses = list(map(toolbox.evaluate, population))
           for ind, fit in zip(population, fitnesses):
-              ind.fitness.values = fit
+               ind.fitness.values = fit
 
           history = []
 
           # Loop principal das gerações
           for gen in range(params.num_generations):
-               # Lógica de Steady-State ou Geracional
+               # A evolução acontece aqui. A população interna permanece com scores brutos.
                if params.steady_state_with_duplicates or params.steady_state_without_duplicates:
-                   self._evolve_steady_state(population, toolbox, params)
+                    self._evolve_steady_state(population, toolbox, params)
                else:
-                   self._evolve_generational(population, toolbox, params)
+                    self._evolve_generational(population, toolbox, params)
 
-               # Guarda o melhor indivíduo da geração atual
+              # --- LÓGICA DE LOGGING ---
+               # Pega o melhor indivíduo da geração
                best_individual = tools.selBest(population, 1)[0]
+               # Pega o seu fitness BRUTO, que é o valor real e que queremos analisar
+               best_raw_fitness = best_individual.fitness.values[0]
+               # Adiciona o valor BRUTO e informativo ao histórico
                history.append(
-                   (gen, best_individual[:], best_individual.fitness.values[0])
+                    (gen, best_individual[:], best_raw_fitness)
                )
 
-          last_generation_values = [ind.fitness.values[0]
-              for ind in population]
+          last_generation_values = [ind.fitness.values[0] for ind in population]
           return population, history, last_generation_values
-
-
 
      async def run_multiple_experiments(self, func_str: str, params: ExecutionParameters, num_experiments: int) -> tuple:
           """
@@ -84,20 +77,16 @@ class GeneticAlgorithmExecutor:
           """
           all_results = []
           with concurrent.futures.ThreadPoolExecutor() as executor:
-               # Submete todas as execuções para o pool de threads
                futures = [
                     executor.submit(self._run_single_experiment, func_str, params)
                     for _ in range(num_experiments)
                ]
 
-               # Coleta os resultados conforme eles ficam prontos
                for future in concurrent.futures.as_completed(futures):
                     all_results.append(future.result())
 
-          # Processa e agrega os resultados de todos os experimentos
           return self._aggregate_results(all_results, params)
 
-     # Métodos privados e auxiliares
 
      def _aggregate_results(self, all_results: list, params: ExecutionParameters) -> tuple:
          """Processa os resultados brutos de todas as execuções."""
@@ -109,7 +98,6 @@ class GeneticAlgorithmExecutor:
                                         for ind in r[1]] for r in all_results]
          last_generation_values_per_experiment = [r[2] for r in all_results]
 
-         # Corrigindo a agregação da média
          mean_best_individuals_per_generation = [
              float(np.mean([exp_gen_values[gen]
                             for exp_gen_values in best_values_per_generation]))
@@ -128,7 +116,6 @@ class GeneticAlgorithmExecutor:
           x, y = sp.symbols('x y')
           func_expr = sp.sympify(func_str)
           if len(func_expr.free_symbols) == 1 and x in func_expr.free_symbols:
-               # Simplificação para 2D
                func_expr = func_expr + func_expr.subs(x, y)
           return sp.lambdify((x, y), func_expr, "numpy"), x, y
 
@@ -186,72 +173,54 @@ class GeneticAlgorithmExecutor:
 
 
      def _evolve_generational(self, population: list, toolbox: base.Toolbox, params: ExecutionParameters):
-          """
-          Executa um ciclo de evolução geracional.
-          Esta versão garante que a normalização seja usada apenas para a seleção,
-          sem alterar os scores brutos armazenados na população.
-          """
-          # 1. FAZ UMA CÓPIA TEMPORÁRIA DOS FITNESS BRUTOS
-          raw_fitnesses = [ind.fitness.values for ind in population]
-
-          # 2. APLICA A NORMALIZAÇÃO APENAS PARA A SELEÇÃO
-          if params.normalize_linear:
-              # Extrai apenas o primeiro valor da tupla de fitness para normalizar
-              raw_scores = [fit[0] for fit in raw_fitnesses]
-
-              normalized_scores = self._normalize_fitness(
-                  raw_scores, params.normalize_min, params.normalize_max
-                  )
-              # Atribui os scores normalizados temporariamente
-              for ind, norm_fit in zip(population, normalized_scores):
-                   ind.fitness.values = (norm_fit,)
-
-          # 3. SELEÇÃO (usa os scores normalizados, se aplicável)
-          offspring = toolbox.select(population, len(population))
-          offspring = list(map(toolbox.clone, offspring))
-
-          # 4. RESTAURA OS FITNESS BRUTOS NA POPULAÇÃO ORIGINAL
-          # Este passo é crucial para a consistência dos dados
-          if params.normalize_linear:
-              for ind, raw_fit in zip(population, raw_fitnesses):
-                  ind.fitness.values = raw_fit
-
-          # --- O restante do processo continua como antes ---
-
-          # Elitismo: guarda os melhores indivíduos (com fitness bruto)
           elites = []
           if params.elitism:
-              elite_count = _calculate_elite_count(params.population_size)
-              elites = tools.selBest(population, elite_count)
-              elites = list(map(toolbox.clone, elites))
+               elite_count = _calculate_elite_count(params.population_size)
+               elites = tools.selBest(population, elite_count)
+               elites = list(map(toolbox.clone, elites))
 
-          # Crossover e Mutação
+          if params.normalize_linear:
+               selection_pool = list(map(toolbox.clone, population))
+               raw_scores = [ind.fitness.values[0] for ind in selection_pool]
+               normalized_scores = self._normalize_fitness(
+                    raw_scores, params.normalize_min, params.normalize_max
+               )
+               for ind, norm_fit in zip(selection_pool, normalized_scores):
+                    ind.fitness.values = (norm_fit,)
+               offspring = toolbox.select(selection_pool, len(population))
+          else:
+               offspring = toolbox.select(population, len(population))
+          
+          offspring = list(map(toolbox.clone, offspring))
+
+
           for child1, child2 in zip(offspring[::2], offspring[1::2]):
-              if random.random() < params.crossover_rate:
-                  toolbox.mate(child1, child2)
-                  del child1.fitness.values
-                  del child2.fitness.values
+               if random.random() < params.crossover_rate:
+                    toolbox.mate(child1, child2)
+                    del child1.fitness.values  
+                    del child2.fitness.values
 
           for mutant in offspring:
-              if random.random() < params.mutation_rate:
-                  toolbox.mutate(mutant)
-                  del mutant.fitness.values
+               if random.random() < params.mutation_rate:
+                    toolbox.mutate(mutant)
+                    del mutant.fitness.values 
 
-          # Avalia os novos filhos (eles recebem fitness bruto, o que está correto)
           invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
           fitnesses = map(toolbox.evaluate, invalid_ind)
           for ind, fit in zip(invalid_ind, fitnesses):
-              ind.fitness.values = fit
+               ind.fitness.values = fit
 
-          # Substituição da população
+          if params.normalize_linear:
+               for ind in offspring:
+                    if ind.fitness.valid:
+                         ind.fitness.values = toolbox.evaluate(ind)
+
           population[:] = offspring
 
-          # Re-introduz os elites (que já tinham fitness bruto)
           if params.elitism and elites:
-              population.extend(elites)
-              population.sort(key=lambda ind: ind.fitness.values,
-                              reverse=params.maximize)
-              population[:] = population[:params.population_size]
+               population.extend(elites)
+               population.sort(key=lambda ind: ind.fitness.values, reverse=params.maximize)
+               population[:] = population[:params.population_size]
 
 
 
@@ -262,16 +231,13 @@ class GeneticAlgorithmExecutor:
           Executa um ciclo de evolução no modelo Steady-State.
           Apenas uma fração (definida pelo 'gap') da população é substituída.
           """
-          # Calcula o número de indivíduos a serem substituídos
-          # params.gap já é um float (0.0 a 1.0), então a divisão por 100 não é mais necessária.
           num_offspring = int(params.gap * len(population))
           if num_offspring == 0 and params.gap > 0:
-               num_offspring = 1 # Garante que pelo menos 1 indivíduo evolua se o gap for pequeno.
+               num_offspring = 1
                
           if num_offspring == 0:
-               return # Se o gap for 0, nada acontece, como discutimos.
+               return 
 
-          # Seleciona pais aleatoriamente para gerar os novos filhos
           parents = tools.selRandom(population, k=num_offspring)
           offspring = list(map(toolbox.clone, parents))
 
@@ -287,32 +253,27 @@ class GeneticAlgorithmExecutor:
                     toolbox.mutate(mutant)
                     del mutant.fitness.values
 
-          # Avalia os novos filhos
           invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
           fitnesses = map(toolbox.evaluate, invalid_ind)
           for ind, fit in zip(invalid_ind, fitnesses):
                ind.fitness.values = fit
 
-          # Remove duplicatas se a opção estiver ativa
           if params.steady_state_without_duplicates:
-               # Cria um set com representações de tupla dos indivíduos existentes para busca rápida
                existing_individuals = {tuple(ind) for ind in population}
                
                unique_offspring = []
                for ind in offspring:
                     if tuple(ind) not in existing_individuals:
                          unique_offspring.append(ind)
-                         existing_individuals.add(tuple(ind)) # Adiciona ao set para evitar duplicatas entre os próprios filhos
+                         existing_individuals.add(tuple(ind))
                
                offspring = unique_offspring
 
-          if not offspring: # Se todos os filhos forem duplicados e removidos
+          if not offspring: 
                return 
 
-          # Substituição: os piores da população são substituídos pelos novos filhos
           worst_individuals = tools.selWorst(population, len(offspring))
           for ind_to_remove in worst_individuals:
-               # A remoção em loop pode ser lenta. Uma abordagem mais eficiente é construir uma nova lista.
                population.remove(ind_to_remove)
           population.extend(offspring)
 
@@ -325,9 +286,8 @@ class GeneticAlgorithmExecutor:
                x_val, y_val = individual
                result = func(x_val, y_val)
           else:
-               # Caso a função seja 1D, ou o indivíduo tenha apenas 1 gene
                x_val = individual[0]
-               result = func(x_val, x_val)  # Duplica o valor para funções 2D que recebem indivíduos 1D
+               result = func(x_val, x_val) 
 
           # DEAP espera que o fitness seja uma tupla
           return float(result),
@@ -341,8 +301,6 @@ class GeneticAlgorithmExecutor:
                if random.random() < indpb:
                     # Adiciona o ruído gaussiano
                     individual[i] += random.gauss(mu, sigma)
-                    # Garante que o valor permaneça dentro dos limites [min, max]
                     individual[i] = max(interval[0], min(individual[i], interval[1]))
                     
-          # Retorna o indivíduo mutado como uma tupla (convenção do DEAP)
           return individual,

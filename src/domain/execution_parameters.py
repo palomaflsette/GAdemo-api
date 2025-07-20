@@ -1,5 +1,3 @@
-# /src/domain/execution_parameters.py
-
 from pydantic import BaseModel, model_validator, Field
 from typing import List
 
@@ -36,13 +34,11 @@ class ExecutionParameters(BaseModel):
     interval: List[int]
     crossover_type: CrossoverType = Field(default_factory=CrossoverType)
 
-    # Parâmetros opcionais com valores padrão
     elitism: bool = False
     normalize_linear: bool = False
     normalize_min: int = 0
     normalize_max: int = 100
 
-    # Parâmetros do Steady-State
     steady_state_with_duplicates: bool = False
     steady_state_without_duplicates: bool = False
     gap: float = Field(
