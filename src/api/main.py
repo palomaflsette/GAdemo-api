@@ -29,15 +29,11 @@ app.add_middleware(
 )
 
 # --- Endpoint Raiz ---
-
-
 @app.get("/")
 def read_root():
     return {"message": "GADemo API está funcionando corretamente"}
 
 # --- Endpoint Principal de Execução ---
-
-
 @app.post("/run-experiments")
 async def run_experiments(
     func_str: str = Query(...,
