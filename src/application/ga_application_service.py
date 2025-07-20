@@ -5,8 +5,7 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 from core.ga_executor import GeneticAlgorithmExecutor
-from domain.crossover_type import CrossoverType
-from domain.execution_characteristics import ExecutionCharacteristics
+from domain.execution_parameters import CrossoverType
 
 
 class GeneticApplicationService:
