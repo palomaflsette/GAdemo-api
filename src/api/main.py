@@ -1,16 +1,19 @@
 import sys
 import os
+import logging
+import time
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
-import time
-import logging
-import uvicorn
-import datetime
-from fastapi import FastAPI, Query, Body
-from fastapi.middleware.cors import CORSMiddleware
 
-from application.ga_application_service import GeneticApplicationService
+import datetime
+import uvicorn
+
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Query, Body
+
 from domain.execution_parameters import ExecutionParameters
+from application.ga_application_service import GeneticApplicationService
+
 
 app = FastAPI(
     title="GADemo API",
@@ -26,9 +29,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def read_root():
     return {"message": "GADemo API está funcionando corretamente"}
+
 
 @app.post("/run-experiments")
 async def run_experiments(
@@ -41,8 +46,19 @@ async def run_experiments(
 ):
     """
     Executa um ou mais experimentos do Algoritmo Genético e retorna os resultados agregados.
+    
     """
-    print(f"DEBUG: Parâmetros recebidos na API: normalize_linear = {params.normalize_linear}")
+    print(f"DEBUG: Parâmetros recebidos na API:")
+    print(f"  - normalize_linear = {params.normalize_linear}")
+    print(f"  - steady_state_removal = {params.steady_state_removal}")
+    print(
+        f"  - steady_state_with_duplicates = {params.steady_state_with_duplicates}")
+    print(
+        f"  - steady_state_without_duplicates = {params.steady_state_without_duplicates}")
+    print(f"  - gap = {params.gap}")
+    print(f"  - elitism = {params.elitism}")
+    print(f"  - crossover = {params.crossover_type}")
+
     start_time = time.time()
 
     func_str_safe = func_str.replace('^', '**')
@@ -65,7 +81,13 @@ async def run_experiments(
         "mean_best_individuals_per_generation": mean_best_individuals_per_generation,
         "best_values_per_generation": best_values_per_generation,
         "last_generation_values": last_generation_values,
-        "execution_time_seconds": round(execution_time, 4)
+        "execution_time_seconds": round(execution_time, 4),
+        "parameters_used": {
+            "steady_state_removal": params.steady_state_removal,
+            "gap": params.gap,
+            "steady_state_with_duplicates": params.steady_state_with_duplicates,
+            "steady_state_without_duplicates": params.steady_state_without_duplicates
+        }
     }
 
 if __name__ == "__main__":

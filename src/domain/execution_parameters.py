@@ -44,5 +44,19 @@ class ExecutionParameters(BaseModel):
     gap: float = Field(
         0.0, ge=0.0, le=1.0, description="Gap geracional para Steady-State (0.0 a 1.0).")
 
-    # TODO: Adicionar um validador para garantir que se um dos steady_state for True, o gap > 0.
-    # Isto implementaria a lógica sobre o "paradoxo do Gap = 0".
+
+    steady_state_removal: str = Field(
+        'tournament',
+        description="Estratégia de remoção no Steady-State: 'random' (clássico), 'worst' (elitista), 'tournament' (híbrido)"
+    )
+
+    @model_validator(mode='after')
+    def validate_steady_state_removal(self) -> 'ExecutionParameters':
+        """Valida que a estratégia de remoção é válida."""
+        valid_strategies = ['random', 'worst', 'tournament']
+        if self.steady_state_removal not in valid_strategies:
+            raise ValueError(
+                f"Estratégia de remoção deve ser uma de: {valid_strategies}. "
+                f"Recebido: '{self.steady_state_removal}'"
+            )
+        return self
