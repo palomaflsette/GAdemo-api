@@ -168,13 +168,50 @@ class GeneticAlgorithmExecutor:
 
 
 
+     def _apply_crossover_mutation(self, offspring: list, toolbox: base.Toolbox, params: ExecutionParameters):
+          """
+          Aplica crossover e mutação de forma IDÊNTICA para Geracional e Steady-State.
+          
+          Este método garante que as operações genéticas sejam exatamente as mesmas,
+          independentemente da estratégia evolutiva usada.
+          
+          Args:
+               offspring: Lista de indivíduos para aplicar operações
+               toolbox: Toolbox do DEAP com operadores configurados
+               params: Parâmetros com taxas de crossover e mutação
+          """
+          # CROSSOVER - Exatamente igual para ambas estratégias
+          for child1, child2 in zip(offspring[::2], offspring[1::2]):
+               if random.random() < params.crossover_rate:
+                    toolbox.mate(child1, child2)
+                    del child1.fitness.values
+                    del child2.fitness.values
+
+          # MUTAÇÃO - Exatamente igual para ambas estratégias  
+          for mutant in offspring:
+               if random.random() < params.mutation_rate:
+                    toolbox.mutate(mutant)
+                    del mutant.fitness.values
+
+          # AVALIAÇÃO - Exatamente igual para ambas estratégias
+          invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+          fitnesses = map(toolbox.evaluate, invalid_ind)
+          for ind, fit in zip(invalid_ind, fitnesses):
+               ind.fitness.values = fit
+
      def _evolve_generational(self, population: list, toolbox: base.Toolbox, params: ExecutionParameters):
+          """
+          Evolução geracional - LIMPA, só cuida da lógica geracional.
+          Crossover/mutação delegados para método unificado.
+          """
+          # ELITISMO
           elites = []
           if params.elitism:
                elite_count = _calculate_elite_count(params.population_size)
                elites = tools.selBest(population, elite_count)
                elites = list(map(toolbox.clone, elites))
 
+          # SELEÇÃO (toda a população)
           if params.normalize_linear:
                selection_pool = list(map(toolbox.clone, population))
                raw_scores = [ind.fitness.values[0] for ind in selection_pool]
@@ -189,88 +226,94 @@ class GeneticAlgorithmExecutor:
           
           offspring = list(map(toolbox.clone, offspring))
 
+          # CROSSOVER + MUTAÇÃO (método unificado - GARANTIDAMENTE IGUAL)
+          self._apply_crossover_mutation(offspring, toolbox, params)
 
-          for child1, child2 in zip(offspring[::2], offspring[1::2]):
-               if random.random() < params.crossover_rate:
-                    toolbox.mate(child1, child2)
-                    del child1.fitness.values  
-                    del child2.fitness.values
-
-          for mutant in offspring:
-               if random.random() < params.mutation_rate:
-                    toolbox.mutate(mutant)
-                    del mutant.fitness.values 
-
-          invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-          fitnesses = map(toolbox.evaluate, invalid_ind)
-          for ind, fit in zip(invalid_ind, fitnesses):
-               ind.fitness.values = fit
-
+          # NORMALIZAÇÃO PÓS-OPERAÇÃO (se necessário)
           if params.normalize_linear:
                for ind in offspring:
                     if ind.fitness.valid:
                          ind.fitness.values = toolbox.evaluate(ind)
 
+          # SUBSTITUIÇÃO GERACIONAL (população inteira)
           population[:] = offspring
 
+          # REINTRODUÇÃO DE ELITES
           if params.elitism and elites:
                population.extend(elites)
                population.sort(key=lambda ind: ind.fitness.values, reverse=params.maximize)
                population[:] = population[:params.population_size]
 
-
-
-
-
      def _evolve_steady_state(self, population: list, toolbox: base.Toolbox, params: ExecutionParameters):
           """
-          Executa um ciclo de evolução no modelo Steady-State.
-          Apenas uma fração (definida pelo 'gap') da população é substituída.
+          Evolução Steady-State - CORRIGIDO para evitar erro de remove().
+          Usa índices ao invés de referências de objetos.
           """
+          # CÁLCULO DO GAP
           num_offspring = int(params.gap * len(population))
           if num_offspring == 0 and params.gap > 0:
                num_offspring = 1
-               
           if num_offspring == 0:
                return 
 
+          # SELEÇÃO DE PAIS (apenas fração da população)
           parents = tools.selRandom(population, k=num_offspring)
           offspring = list(map(toolbox.clone, parents))
 
-          # Crossover e Mutação (mesma lógica do geracional, mas aplicada apenas nos 'offspring')
-          for child1, child2 in zip(offspring[::2], offspring[1::2]):
-               if random.random() < params.crossover_rate:
-                    toolbox.mate(child1, child2)
-                    del child1.fitness.values
-                    del child2.fitness.values
+          # CROSSOVER + MUTAÇÃO (método unificado)
+          self._apply_crossover_mutation(offspring, toolbox, params)
 
-          for mutant in offspring:
-               if random.random() < params.mutation_rate:
-                    toolbox.mutate(mutant)
-                    del mutant.fitness.values
-
-          invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-          fitnesses = map(toolbox.evaluate, invalid_ind)
-          for ind, fit in zip(invalid_ind, fitnesses):
-               ind.fitness.values = fit
-
+          # CONTROLE DE DUPLICATAS
           if params.steady_state_without_duplicates:
                existing_individuals = {tuple(ind) for ind in population}
-               
                unique_offspring = []
                for ind in offspring:
                     if tuple(ind) not in existing_individuals:
                          unique_offspring.append(ind)
                          existing_individuals.add(tuple(ind))
-               
                offspring = unique_offspring
 
           if not offspring: 
                return 
 
-          worst_individuals = tools.selWorst(population, len(offspring))
-          for ind_to_remove in worst_individuals:
-               population.remove(ind_to_remove)
+          # ESTRATÉGIA DE REMOÇÃO
+          removal_type = getattr(params, 'steady_state_removal', 'random')
+          
+          if removal_type == 'random':
+               # ===== STEADY-STATE CLÁSSICO =====
+               indices_to_remove = random.sample(range(len(population)), len(offspring))
+               
+          elif removal_type == 'worst':
+               # ===== STEADY-STATE ELITISTA (CORRIGIDO) =====
+               # Cria lista de (fitness, índice) e ordena
+               fitness_index_pairs = [(ind.fitness.values[0], i) for i, ind in enumerate(population)]
+               fitness_index_pairs.sort(key=lambda x: x[0], reverse=not params.maximize)  # Piores primeiro
+               indices_to_remove = [pair[1] for pair in fitness_index_pairs[:len(offspring)]]
+               
+          elif removal_type == 'tournament':
+               # ===== STEADY-STATE POR TORNEIO =====
+               indices_to_remove = []
+               available_indices = list(range(len(population)))
+               
+               for _ in range(len(offspring)):
+                    # Torneio entre índices disponíveis
+                    tournament_indices = random.sample(available_indices, min(2, len(available_indices)))
+                    
+                    # Seleciona o PIOR do torneio (menor fitness se maximizando)
+                    if params.maximize:
+                         worst_idx = min(tournament_indices, key=lambda i: population[i].fitness.values[0])
+                    else:
+                         worst_idx = max(tournament_indices, key=lambda i: population[i].fitness.values[0])
+                         
+                    indices_to_remove.append(worst_idx)
+                    available_indices.remove(worst_idx) 
+                    
+          else:
+               indices_to_remove = random.sample(range(len(population)), len(offspring))
+
+          for idx in sorted(indices_to_remove, reverse=True):
+               population.pop(idx)
+          
           population.extend(offspring)
 
      def _evaluate_func(self, individual: list, func: callable, x: sp.Symbol, y: sp.Symbol) -> tuple:
