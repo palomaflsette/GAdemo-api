@@ -28,18 +28,18 @@ A estrutura do projeto segue o padrão **Domain-Driven Design (DDD)** para facil
 
 ```
 src/
-├── config/                # Arquivos de configuração (não utilizado no momento)
-├── domain/                # Regras de domínio da aplicação
-│   ├── crossover_type.py  # Configurações dos tipos de crossover
-│   ├── evaluation.py      # Funções de avaliação para fitness
-│   ├── execution_characteristics.py # Características da execução
-├── infrastructure/        # Implementação de algoritmos genéticos
-│   ├── genetic_algorithm_executor.py # Executor do algoritmo genético
-├── interface/             # Camada de interface (API)
-│   ├── api.py             # Rotas da API
-│   ├── startup.py         # Inicialização do servidor
-├── services/              # Serviços de backend
-│   ├── genetic_algorithm_service.py # Serviço principal para execução
+├── api/                  # Camada de Interface: Expõe a API RESTful.
+│   └── main.py           # Define os endpoints (rotas) da API com FastAPI.
+│
+├── application/          # Camada de Aplicação: Orquestra os casos de uso.
+│   └── ga_application_service.py # Serviço que recebe as requisições da API e coordena a execução.
+│
+├── core/                 # Camada de Núcleo: Contém a lógica de negócio principal e complexa.
+│   └── ga_executor.py    # O motor do Algoritmo Genético, responsável por toda a execução com DEAP.
+│
+└── domain/               # Camada de Domínio: Define os modelos e entidades da aplicação.
+    ├── execution_parameters.py # Modelos Pydantic que definem os parâmetros de uma execução.
+    └── evaluation.py     # Lógica para otimização e avaliação de funções (feature futura).
 ```
 
 ---
@@ -92,8 +92,8 @@ pip install -r requirements.txt
 Navegue até o diretório correto e inicie o servidor:
 
 ```bash
-cd src/interface
-uvicorn api:app --reload
+cd src/api
+python.exe -m uvicorn main:app --reload
 ```
 
 A API estará disponível em: `http://127.0.0.1:8000`
@@ -112,7 +112,7 @@ http://127.0.0.1:8000/docs
 
 ### **Exemplos de Uso**
 
-#### **Endpoint: `https://127.0.0.1:8000/run-experiments?func_str=x%2A%2A2%20%2B%20y%2A%2A2&num_experiments=1`**
+#### **Endpoint: `http://127.0.0.1:8000/run-experiments?func_str=x%2A%2A2%2By%2A%2A2&num_experiments=3`**
 
 Executa o algoritmo genético com os parâmetros fornecidos.
 
@@ -121,10 +121,10 @@ Executa o algoritmo genético com os parâmetros fornecidos.
 
 ```json
 {
-  "num_generations": 2,
-  "population_size": 5,
-  "crossover_rate": 65,
-  "mutation_rate": 0.80,
+  "num_generations": 1,
+  "population_size": 1,
+  "crossover_rate": 1,
+  "mutation_rate": 1,
   "maximize": true,
   "interval": [
     -100,100
@@ -134,13 +134,14 @@ Executa o algoritmo genético com os parâmetros fornecidos.
     "two_point": false,
     "uniform": false
   },
+  "elitism": false,
   "normalize_linear": false,
   "normalize_min": 0,
   "normalize_max": 100,
-  "elitism": false,
-  "steady_state": false,
-  "steady_state_without_duplicateds": false,
-  "gap": 0
+  "steady_state_with_duplicates": false,
+  "steady_state_without_duplicates": false,
+  "gap": 0,
+  "steady_state_removal": "tournament"
 }
 ```
 
@@ -149,40 +150,62 @@ Executa o algoritmo genético com os parâmetros fornecidos.
 ```json
 {
   "best_experiment_values": [
-    14273.174806266543
+    2521.725506661136,
+    9874.363477025174,
+    6531.058635454476
   ],
   "best_individuals_per_generation": [
     [
       [
-        86.20652119245678,
-        82.71033109374736
-      ],
+        20.90135383163233,
+        45.660255306623554
+      ]
+    ],
+    [
       [
-        85.65159920216274,
-        83.2885247821008
+        -83.3503096614881,
+        54.10258179014397
+      ]
+    ],
+    [
+      [
+        33.483507489305566,
+        -73.55211323726935
       ]
     ]
   ],
   "mean_best_individuals_per_generation": [
-    14272.56316574281,
-    14273.174806266543
+    6309.049206380262
   ],
   "best_values_per_generation": [
     [
-      14272.56316574281,
-      14273.174806266543
+      2521.725506661136
+    ],
+    [
+      9874.363477025174
+    ],
+    [
+      6531.058635454476
     ]
   ],
   "last_generation_values": [
     [
-      14093.589115662799,
-      14273.174806266543,
-      10723.882196624947,
-      14272.56316574281,
-      14272.56316574281
+      2521.725506661136
+    ],
+    [
+      9874.363477025174
+    ],
+    [
+      6531.058635454476
     ]
   ],
-  "execution_time_seconds": 0.2980344295501709
+  "execution_time_seconds": 0.2346,
+  "parameters_used": {
+    "steady_state_removal": "tournament",
+    "gap": 0,
+    "steady_state_with_duplicates": false,
+    "steady_state_without_duplicates": false
+  }
 }
 ```
 
