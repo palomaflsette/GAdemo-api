@@ -75,7 +75,7 @@ class GeneticAlgorithmExecutor:
           Ponto de entrada principal. Executa múltiplos experimentos em paralelo.
           """
           all_results = []
-          with concurrent.futures.ThreadPoolExecutor() as executor:
+          with concurrent.futures.ProcessPoolExecutor() as executor:
                futures = [
                     executor.submit(self._run_single_experiment, func_str, params)
                     for _ in range(num_experiments)
