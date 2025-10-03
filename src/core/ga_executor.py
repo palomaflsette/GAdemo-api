@@ -74,15 +74,36 @@ class GeneticAlgorithmExecutor:
           """
           Ponto de entrada principal. Executa múltiplos experimentos em paralelo.
           """
-          all_results = []
-          with concurrent.futures.ProcessPoolExecutor() as executor:
-               futures = [
-                    executor.submit(self._run_single_experiment, func_str, params)
-                    for _ in range(num_experiments)
-               ]
+          # Limita os workers para evitar oversubscription quando há vários web workers
+          import os
+          env_max = os.getenv("GA_MAX_WORKERS")
+          try:
+               max_workers = int(env_max) if env_max else None
+          except ValueError:
+               max_workers = None
 
-               for future in concurrent.futures.as_completed(futures):
-                    all_results.append(future.result())
+          # Default: número de CPUs, mas ao menos 1 e no máximo num_experiments
+          cpu_count = os.cpu_count() or 1
+          max_workers = max(1, min(num_experiments, max_workers or cpu_count))
+
+          all_results = []
+          try:
+               with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+                    futures = [
+                         executor.submit(self._run_single_experiment, func_str, params)
+                         for _ in range(num_experiments)
+                    ]
+                    for future in concurrent.futures.as_completed(futures):
+                         all_results.append(future.result())
+          except Exception:
+               # Em ambientes que bloqueiam ProcessPool (ou Windows dev), faz fallback para ThreadPool
+               with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = [
+                         executor.submit(self._run_single_experiment, func_str, params)
+                         for _ in range(num_experiments)
+                    ]
+                    for future in concurrent.futures.as_completed(futures):
+                         all_results.append(future.result())
 
           return self._aggregate_results(all_results, params)
 

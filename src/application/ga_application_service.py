@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.abspath(
 
 from domain.execution_parameters import CrossoverType, ExecutionParameters
 from core.ga_executor import GeneticAlgorithmExecutor
+import asyncio
 
 class GeneticApplicationService:
     def __init__(self):
@@ -28,10 +29,9 @@ class GeneticApplicationService:
         Returns:
             Tupla com resultados agregados de todos os experimentos
         """
-        results = await self.executor.run_multiple_experiments(
-            func_str,
-            params, 
-            num_experiments
+        # Evita bloquear o event loop ao rodar CPU-bound
+        results = await asyncio.to_thread(
+            lambda: asyncio.run(self.executor.run_multiple_experiments(func_str, params, num_experiments))
         )
 
         return results
