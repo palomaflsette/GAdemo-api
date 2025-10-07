@@ -10,8 +10,8 @@ from domain.execution_parameters import ExecutionParameters
 # Configura o Celery para usar a URL do Redis que o Heroku providenciou
 celery_app = Celery(
     'tasks',
-    broker=os.environ.get("REDIS_URL", "redis://localhost:6379/0"),
-    backend=os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    broker=os.environ.get("REDISCLOUD_URL", "redis://localhost:6379/0"),
+    backend=os.environ.get("REDISCLOUD_URL", "redis://localhost:6379/0")
 )
 
 @celery_app.task
