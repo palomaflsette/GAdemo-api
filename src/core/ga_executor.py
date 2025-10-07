@@ -70,7 +70,7 @@ class GeneticAlgorithmExecutor:
           last_generation_values = [ind.fitness.values[0] for ind in population]
           return population, history, last_generation_values
 
-     async def run_multiple_experiments(self, func_str: str, params: ExecutionParameters, num_experiments: int) -> tuple:
+     def run_multiple_experiments(self, func_str: str, params: ExecutionParameters, num_experiments: int) -> tuple:
           """
           Ponto de entrada principal. Executa múltiplos experimentos em paralelo.
           """

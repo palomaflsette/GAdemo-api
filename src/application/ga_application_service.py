@@ -13,7 +13,7 @@ class GeneticApplicationService:
     def __init__(self):
         self.executor = GeneticAlgorithmExecutor()
 
-    async def run_experiments(self, func_str: str, params: ExecutionParameters, num_experiments: int):
+    def run_experiments(self, func_str: str, params: ExecutionParameters, num_experiments: int):
         """
         Orquestra a execução de múltiplos experimentos de forma paralela.
 
@@ -30,8 +30,5 @@ class GeneticApplicationService:
             Tupla com resultados agregados de todos os experimentos
         """
         # Evita bloquear o event loop ao rodar CPU-bound
-        results = await asyncio.to_thread(
-            lambda: asyncio.run(self.executor.run_multiple_experiments(func_str, params, num_experiments))
-        )
-
+        results = self.executor.run_multiple_experiments(func_str, params, num_experiments)
         return results

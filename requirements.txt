@@ -6,3 +6,5 @@ deap
 numpy
 sympy
 openpyxl
+celery
+redis
