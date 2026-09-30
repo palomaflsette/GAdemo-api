@@ -1,8 +1,44 @@
-__pycache__
-.vscode
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+ENV/
+
+# Empacotamento / build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testes / cobertura
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# Variáveis de ambiente e segredos
 .env
-quarentine
+.env.*
+
+# Editores / IDEs
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+server_logs.log
+
+# Específicos do projeto
+quarentine/
 callback_pop_example
 callback_plot_example
 test.py
-server_logs.log
