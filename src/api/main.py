@@ -22,11 +22,30 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Origens liberadas no CORS. Por padrão, os domínios reais do front e o dev
+# local; o deploy institucional (Maxwell/VRAC) pode sobrescrever pela variável
+# de ambiente GADEMO_ALLOWED_ORIGINS (lista separada por vírgula) sem mexer no
+# código. allow_credentials fica False porque o front não envia credenciais —
+# e ["*"] com credentials=True seria, aliás, uma combinação inválida.
+_DEFAULT_ALLOWED_ORIGINS = [
+    "https://palomasette.com",
+    "https://www.palomasette.com",
+    "https://palomaflsette.github.io",
+]
+_env_origins = os.getenv("GADEMO_ALLOWED_ORIGINS", "").strip()
+allowed_origins = (
+    [o.strip() for o in _env_origins.split(",") if o.strip()]
+    if _env_origins
+    else _DEFAULT_ALLOWED_ORIGINS
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=allowed_origins,
+    # localhost/127.0.0.1 em qualquer porta, para desenvolvimento.
+    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
