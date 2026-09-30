@@ -9,10 +9,11 @@ import datetime
 import uvicorn
 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, Query, Body
+from fastapi import FastAPI, Query, Body, HTTPException
 
 from domain.execution_parameters import ExecutionParameters
 from application.ga_application_service import GeneticApplicationService
+from core.ga_executor import validate_expression, UnsafeExpressionError
 
 
 app = FastAPI(
@@ -48,30 +49,29 @@ async def run_experiments(
     Executa um ou mais experimentos do Algoritmo Genético e retorna os resultados agregados.
     
     """
-    print(f"DEBUG: Parâmetros recebidos na API:")
-    print(f"  - normalize_linear = {params.normalize_linear}")
-    print(f"  - steady_state_removal = {params.steady_state_removal}")
-    print(
-        f"  - steady_state_with_duplicates = {params.steady_state_with_duplicates}")
-    print(
-        f"  - steady_state_without_duplicates = {params.steady_state_without_duplicates}")
-    print(f"  - gap = {params.gap}")
-    print(f"  - elitism = {params.elitism}")
-    print(f"  - crossover = {params.crossover_type}")
-
     start_time = time.time()
 
     func_str_safe = func_str.replace('^', '**')
 
+    # Valida a expressão ANTES de executar qualquer coisa: entrada que não seja
+    # função matemática é recusada com 400, sem efeito colateral.
+    try:
+        validate_expression(func_str_safe)
+    except UnsafeExpressionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     ga_service = GeneticApplicationService()
 
-    (
-        best_experiment_values,
-        best_individuals_per_generation,
-        mean_best_individuals_per_generation,
-        best_values_per_generation,
-        last_generation_values,
-    ) = await ga_service.run_experiments(func_str_safe, params, num_experiments)
+    try:
+        (
+            best_experiment_values,
+            best_individuals_per_generation,
+            mean_best_individuals_per_generation,
+            best_values_per_generation,
+            last_generation_values,
+        ) = await ga_service.run_experiments(func_str_safe, params, num_experiments)
+    except UnsafeExpressionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     execution_time = time.time() - start_time
 
