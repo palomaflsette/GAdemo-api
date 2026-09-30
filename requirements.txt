@@ -1,8 +1,8 @@
-fastapi
-uvicorn[standard]
-gunicorn
-pydantic
-deap
-numpy
-sympy
-openpyxl
+deap==1.4.4
+fastapi==0.142.1
+gunicorn==26.2.0
+numpy==2.5.3
+openpyxl==3.1.5
+pydantic==2.13.5
+sympy==1.14.0
+uvicorn[standard]==0.54.0
