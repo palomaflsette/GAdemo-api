@@ -4,14 +4,18 @@ WORKDIR /gademo
 
 COPY requirements.txt .
 
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 8000
+# Roda como usuário sem privilégio (antes o processo rodava como root).
+RUN useradd --create-home --uid 1000 appuser \
+    && chown -R appuser:appuser /gademo
+USER appuser
 
-VOLUME ./src /gademo/src
+EXPOSE 8000
 
 WORKDIR /gademo/src/api
 
-ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Sem --reload (modo de desenvolvimento). Produção no Heroku usa o Procfile.
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

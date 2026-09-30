@@ -3,6 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
+import ast
 import random
 import numpy as np
 import sympy as sp
@@ -10,6 +11,98 @@ import concurrent.futures
 from deap import base, creator, tools
 
 from domain.execution_parameters import ExecutionParameters
+
+
+# ---------------------------------------------------------------------------
+# Validação segura da expressão do usuário.
+#
+# A entrada do endpoint público é uma string que vira função matemática. Antes,
+# ela ia direta ao sympy.sympify, que avalia a string como código Python — ou
+# seja, execução remota de código num endpoint sem autenticação. Aqui validamos
+# a árvore sintática (ast) ANTES de qualquer avaliação e só deixamos passar:
+# números, x, y, pi, os operadores aritméticos e as funções do teclado. Qualquer
+# outra construção (import, acesso a atributo, chamada a nome fora da lista) é
+# recusada sem executar nada.
+# ---------------------------------------------------------------------------
+
+_ALLOWED_FUNCTIONS = {"sin", "cos", "tan", "sqrt", "exp", "log"}
+_ALLOWED_NAMES = {"x", "y", "pi"}
+_ALLOWED_OPERATORS = (
+    ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.USub, ast.UAdd, ast.Mod,
+)
+
+# Limites defensivos contra negação de serviço: expressões que passam na
+# allowlist mas forçam o sympify a materializar um número gigante.
+_MAX_EXPRESSION_LENGTH = 256
+_MAX_CONSTANT_MAGNITUDE = 1e6
+
+
+class UnsafeExpressionError(ValueError):
+    """Expressão do usuário reprovada na validação de segurança."""
+
+
+def _expoente_contem_potencia(node: ast.AST) -> bool:
+    """Detecta torre de expoentes (a**b**c), que faria o sympify explodir."""
+    return any(
+        isinstance(sub, ast.BinOp) and isinstance(sub.op, ast.Pow)
+        for sub in ast.walk(node)
+    )
+
+
+def validate_expression(func_str: str) -> None:
+    """Valida a expressão via árvore sintática, sem avaliar nada.
+
+    Aceita apenas números, os símbolos x e y, a constante pi, os operadores
+    aritméticos e as funções sin/cos/tan/sqrt/exp/log. Levanta
+    UnsafeExpressionError em qualquer outra construção. A string deve chegar já
+    com '**' no lugar de '^'.
+    """
+    if len(func_str) > _MAX_EXPRESSION_LENGTH:
+        raise UnsafeExpressionError(
+            f"Expressão longa demais (máximo de {_MAX_EXPRESSION_LENGTH} caracteres)."
+        )
+
+    try:
+        tree = ast.parse(func_str, mode="eval")
+    except SyntaxError as exc:
+        raise UnsafeExpressionError(f"Expressão inválida: {exc.msg}.") from exc
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Load)):
+            continue
+        if isinstance(node, _ALLOWED_OPERATORS):
+            continue
+        if isinstance(node, ast.Constant):
+            # bool é subclasse de int em Python; recusamos explicitamente.
+            if isinstance(node.value, bool) or not isinstance(node.value, (int, float)):
+                raise UnsafeExpressionError("Só números são permitidos como constante.")
+            if abs(node.value) > _MAX_CONSTANT_MAGNITUDE:
+                raise UnsafeExpressionError(
+                    f"Constante fora do limite permitido (máximo {_MAX_CONSTANT_MAGNITUDE:g})."
+                )
+            continue
+        if isinstance(node, ast.Name):
+            if node.id not in _ALLOWED_NAMES and node.id not in _ALLOWED_FUNCTIONS:
+                raise UnsafeExpressionError(f"Nome não permitido: '{node.id}'.")
+            continue
+        if isinstance(node, ast.Call):
+            if not isinstance(node.func, ast.Name) or node.func.id not in _ALLOWED_FUNCTIONS:
+                raise UnsafeExpressionError("Chamada de função não permitida.")
+            if node.keywords:
+                raise UnsafeExpressionError("Argumentos nomeados não são permitidos.")
+            continue
+        # Attribute, Subscript, Lambda, comprehensions, etc. caem aqui.
+        raise UnsafeExpressionError(f"Construção proibida: {type(node).__name__}.")
+
+    # Anti-DoS: a allowlist acima aceita 9**9**9**9 (só números e potência), mas
+    # o sympify tentaria materializar um inteiro com centenas de milhões de
+    # dígitos e travaria o processo. Proibimos potência dentro do expoente.
+    for node in ast.walk(tree):
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Pow):
+            if _expoente_contem_potencia(node.right):
+                raise UnsafeExpressionError(
+                    "Torre de expoentes não é permitida (ex.: a**b**c)."
+                )
 
 
 def _calculate_elite_count(population_size: int) -> int:
@@ -133,8 +226,15 @@ class GeneticAlgorithmExecutor:
          )
 
      def _get_function(self, func_str: str):
+          # Valida a expressão ANTES de qualquer avaliação (fecha o RCE).
+          validate_expression(func_str)
           x, y = sp.symbols('x y')
-          func_expr = sp.sympify(func_str)
+          try:
+               func_expr = sp.sympify(func_str)
+          except (sp.SympifyError, SyntaxError, TypeError) as exc:
+               raise UnsafeExpressionError(
+                    f"Não foi possível interpretar a expressão: {exc}."
+               ) from exc
           if len(func_expr.free_symbols) == 1 and x in func_expr.free_symbols:
                func_expr = func_expr + func_expr.subs(x, y)
           return sp.lambdify((x, y), func_expr, "numpy"), x, y

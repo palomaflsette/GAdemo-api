@@ -9,10 +9,11 @@ import datetime
 import uvicorn
 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, Query, Body
+from fastapi import FastAPI, Query, Body, HTTPException
 
 from domain.execution_parameters import ExecutionParameters
 from application.ga_application_service import GeneticApplicationService
+from core.ga_executor import validate_expression, UnsafeExpressionError
 
 
 app = FastAPI(
@@ -21,11 +22,30 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Origens liberadas no CORS. Por padrão, os domínios reais do front e o dev
+# local; o deploy institucional (Maxwell/VRAC) pode sobrescrever pela variável
+# de ambiente GADEMO_ALLOWED_ORIGINS (lista separada por vírgula) sem mexer no
+# código. allow_credentials fica False porque o front não envia credenciais —
+# e ["*"] com credentials=True seria, aliás, uma combinação inválida.
+_DEFAULT_ALLOWED_ORIGINS = [
+    "https://palomasette.com",
+    "https://www.palomasette.com",
+    "https://palomaflsette.github.io",
+]
+_env_origins = os.getenv("GADEMO_ALLOWED_ORIGINS", "").strip()
+allowed_origins = (
+    [o.strip() for o in _env_origins.split(",") if o.strip()]
+    if _env_origins
+    else _DEFAULT_ALLOWED_ORIGINS
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=allowed_origins,
+    # localhost/127.0.0.1 em qualquer porta, para desenvolvimento.
+    allow_origin_regex=r"^http://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -40,7 +60,7 @@ async def run_experiments(
     func_str: str = Query(...,
                           description="A função a ser otimizada em formato de string."),
     num_experiments: int = Query(
-        ..., gt=0, description="O número de vezes que o experimento será executado."),
+        ..., gt=0, le=50, description="O número de vezes que o experimento será executado (1 a 50)."),
 
     params: ExecutionParameters = Body(...)
 ):
@@ -48,30 +68,29 @@ async def run_experiments(
     Executa um ou mais experimentos do Algoritmo Genético e retorna os resultados agregados.
     
     """
-    print(f"DEBUG: Parâmetros recebidos na API:")
-    print(f"  - normalize_linear = {params.normalize_linear}")
-    print(f"  - steady_state_removal = {params.steady_state_removal}")
-    print(
-        f"  - steady_state_with_duplicates = {params.steady_state_with_duplicates}")
-    print(
-        f"  - steady_state_without_duplicates = {params.steady_state_without_duplicates}")
-    print(f"  - gap = {params.gap}")
-    print(f"  - elitism = {params.elitism}")
-    print(f"  - crossover = {params.crossover_type}")
-
     start_time = time.time()
 
     func_str_safe = func_str.replace('^', '**')
 
+    # Valida a expressão ANTES de executar qualquer coisa: entrada que não seja
+    # função matemática é recusada com 400, sem efeito colateral.
+    try:
+        validate_expression(func_str_safe)
+    except UnsafeExpressionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     ga_service = GeneticApplicationService()
 
-    (
-        best_experiment_values,
-        best_individuals_per_generation,
-        mean_best_individuals_per_generation,
-        best_values_per_generation,
-        last_generation_values,
-    ) = await ga_service.run_experiments(func_str_safe, params, num_experiments)
+    try:
+        (
+            best_experiment_values,
+            best_individuals_per_generation,
+            mean_best_individuals_per_generation,
+            best_values_per_generation,
+            last_generation_values,
+        ) = await ga_service.run_experiments(func_str_safe, params, num_experiments)
+    except UnsafeExpressionError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     execution_time = time.time() - start_time
 
