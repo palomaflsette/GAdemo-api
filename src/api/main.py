@@ -60,7 +60,7 @@ async def run_experiments(
     func_str: str = Query(...,
                           description="A função a ser otimizada em formato de string."),
     num_experiments: int = Query(
-        ..., gt=0, description="O número de vezes que o experimento será executado."),
+        ..., gt=0, le=50, description="O número de vezes que o experimento será executado (1 a 50)."),
 
     params: ExecutionParameters = Body(...)
 ):
