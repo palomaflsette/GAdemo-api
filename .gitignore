@@ -42,3 +42,7 @@ quarentine/
 callback_pop_example
 callback_plot_example
 test.py
+
+# Atualização de servidor (scripts/atualizar.sh)
+.atualizacao-anterior
+.gademo-ensaio.*

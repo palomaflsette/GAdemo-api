@@ -48,7 +48,7 @@ src/
 
 Certifique-se de que os seguintes requisitos estejam atendidos antes de rodar o projeto:
 
-- **Python 3.8 ou superior**
+- **Python 3.12 ou superior** (exigência do NumPy 2.5)
 - **virtualenv** (ou outra ferramenta de gerenciamento de ambientes virtuais, como pipenv)
 - Dependências listadas em `requirements.txt`
 
@@ -217,6 +217,21 @@ A aplicação está hospedada na plataforma Render:
 
 - **Frontend**: [https://gademo-zxig.onrender.com](https://gademo-zxig.onrender.com)
 - **Documentação da API (Swagger)**: [https://gademo-api.onrender.com/docs](https://gademo-api.onrender.com/docs)
+
+---
+
+### **Versões e atualização**
+
+A API é publicada em versões numeradas (releases), registradas no [CHANGELOG.md](CHANGELOG.md). Instâncias em servidor, como a do Maxwell, são atualizadas sempre a partir de uma release, seguindo o [ATUALIZACAO.md](ATUALIZACAO.md).
+
+Para publicar uma nova versão:
+
+1. Registre as mudanças na seção "Não publicado" do `CHANGELOG.md`. Se o `requirements.txt` mudou, inclua a seção **Dependências** com o que entrou, saiu ou mudou de versão.
+2. Escolha o número: CORREÇÃO para correções (1.0.1), MENOR para novidades compatíveis (1.1.0) e MAIOR para mudanças que quebram quem usa a API (2.0.0).
+3. Atualize o campo `version` em `src/api/main.py` e troque "Não publicado" pelo número e pela data da versão.
+4. Rode os testes (`pytest`) e o `scripts/verificar_instalacao.py` num ambiente recém-criado a partir do `requirements.txt`.
+5. Faça o merge na `main` e crie a release no GitHub com a tag `vX.Y.Z`, usando como notas a entrada do CHANGELOG.
+6. Avise a equipe do Maxwell com o número da versão e o link da release.
 
 ---
 
