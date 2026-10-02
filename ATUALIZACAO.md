@@ -28,7 +28,7 @@ Isso só traz a documentação e os scripts. Não é preciso reinstalar nem rein
 
 Depois do `git checkout` de uma tag, o repositório fica fora de qualquer branch ("detached HEAD"), e `git pull` deixa de funcionar. Isso é esperado: as atualizações passam a ser feitas pela tag.
 
-Opcional: o ambiente atual ainda tem pacotes antigos que não são mais usados, como `pandas` e `flask`. Eles não atrapalham. Se quiserem limpar, basta rodar o script abaixo com `v1.0.0`, o que exige reiniciar o serviço.
+Opcional: um ambiente criado antes de julho de 2025 pode ainda ter pacotes que não são mais usados, como `pandas` e `flask`. Eles não atrapalham. Se quiserem limpar, basta rodar o script abaixo com `v1.0.0`, o que exige reiniciar o serviço.
 
 ## Atualizando com o script
 
